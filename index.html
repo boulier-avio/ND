@@ -54,7 +54,7 @@
             flex-direction: column;
             align-items: center;
         }
-        .desktop-btn {
+        .reponse-btn {
             background: rgba(0,0,0,0.7);
             color: white;
             border: none;
@@ -64,6 +64,25 @@
             font-size: 14px;
             cursor: pointer;
             width: 180px;
+            text-align: center;
+        }
+        .contact-info {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            font-size: 12px;
+            color: #666;
+            z-index: 100;
+            background: rgba(255,255,255,0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .contact-info a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        .contact-info a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -72,11 +91,15 @@
         <div class="cap-display">CAP: <span id="capValue">0</span>°</div>
         <button class="control-btn" id="capPlus">+</button>
         <button class="control-btn" id="capMoins">-</button>
-        <button class="control-btn" id="toggleReponse" style="background: #007bff; font-size: 14px;">Rép</button>
+        <button class="reponse-btn" id="toggleReponse">Afficher/Cacher Réponses</button>
     </div>
 
     <div class="desktop-controls">
-        <button class="desktop-btn" id="desktopToggleReponse">Afficher/Cacher Réponses</button>
+        <button class="reponse-btn" id="desktopToggleReponse">Afficher/Cacher Réponses</button>
+    </div>
+
+    <div class="contact-info">
+        <a href="mailto:renaud.boulier@ac-clermont.fr">contact: renaud.boulier@ac-clermont.fr</a>
     </div>
 
     <script>
@@ -99,6 +122,14 @@
         // Variables pour le contrôle mobile
         let capPlusPressed = false;
         let capMoinsPressed = false;
+
+        // Variables pour le zoom et déplacement
+        let scale = 1.0;
+        let offsetX = 0;
+        let offsetY = 0;
+        let isDragging = false;
+        let lastTouchX, lastTouchY;
+        let lastTouchDistance = 0;
 
         function preload() {
             try {
@@ -143,6 +174,7 @@
             let canvas = createCanvas(windowWidth, windowHeight);
             canvas.style('display', 'block');
             
+            // Position initiale de l'avion au centre
             mmx = width / 2;
             mmy = height / 2;
             baliseLH = createVector(0, -10);
@@ -189,6 +221,7 @@
                 
                 document.querySelector('.mobile-controls').style.display = 'flex';
                 document.querySelector('.desktop-controls').style.display = 'none';
+                document.querySelector('.contact-info').style.display = 'block';
             } else {
                 // Configuration desktop
                 document.getElementById('desktopToggleReponse').addEventListener('click', function(e) {
@@ -197,6 +230,7 @@
                 
                 document.querySelector('.mobile-controls').style.display = 'none';
                 document.querySelector('.desktop-controls').style.display = 'flex';
+                document.querySelector('.contact-info').style.display = 'block';
             }
         }
 
@@ -209,17 +243,35 @@
             // Mise à jour continue du cap
             updateCapContinuous();
 
+            // Appliquer la transformation de zoom et déplacement
+            push();
+            translate(offsetX, offsetY);
+            scale(scale);
+
             // Positions adaptatives
             let NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2;
             
             if (isMobile) {
-                NDX = width * 0.3;
-                NDY = height * 0.25;
-                NDBX1 = width * 0.7;
-                NDBY1 = height * 0.25;
-                NDBX2 = width * 0.7;
-                NDBY2 = height * 0.5;
+                // Adaptation pour mode paysage
+                if (windowWidth > windowHeight) {
+                    // Mode paysage - layout horizontal
+                    NDX = width * 0.25;
+                    NDY = height * 0.4;
+                    NDBX1 = width * 0.65;
+                    NDBY1 = height * 0.3;
+                    NDBX2 = width * 0.65;
+                    NDBY2 = height * 0.6;
+                } else {
+                    // Mode portrait - layout vertical
+                    NDX = width * 0.3;
+                    NDY = height * 0.25;
+                    NDBX1 = width * 0.7;
+                    NDBY1 = height * 0.25;
+                    NDBX2 = width * 0.7;
+                    NDBY2 = height * 0.5;
+                }
             } else {
+                // Desktop
                 NDX = 183;
                 NDY = 183;
                 NDBX1 = 553;
@@ -228,15 +280,30 @@
                 NDBY2 = 383;
             }
 
-            // Contrôle de l'avion
-            updateAircraftPosition(NDX);
-
             // Tailles adaptatives
-            let cadreSize = isMobile ? min(width, height) * 0.35 : 368;
-            let roseSize = isMobile ? min(width, height) * 0.25 : 271;
+            let cadreSize, roseSize, flecheLength;
+            
+            if (isMobile) {
+                if (windowWidth > windowHeight) {
+                    // Mode paysage - tailles réduites
+                    cadreSize = min(width, height) * 0.3;
+                    roseSize = min(width, height) * 0.22;
+                    flecheLength = 150;
+                } else {
+                    // Mode portrait
+                    cadreSize = min(width, height) * 0.35;
+                    roseSize = min(width, height) * 0.25;
+                    flecheLength = 200;
+                }
+            } else {
+                // Desktop
+                cadreSize = 368;
+                roseSize = 271;
+                flecheLength = 231;
+            }
 
             // Affichage des éléments principaux
-            drawMainElements(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2);
+            drawMainElements(NDX, NDY, cadreSize, roseSize, flecheLength, NDBX1, NDBY1, NDBX2, NDBY2);
 
             // Calculs de navigation
             calculateNavigation(NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2);
@@ -246,6 +313,8 @@
 
             // Interface utilisateur
             drawInterface();
+
+            pop(); // Fin de la transformation
         }
 
         function updateCapContinuous() {
@@ -262,23 +331,9 @@
             }
         }
 
-        function updateAircraftPosition(NDX) {
-            if (isMobile) {
-                if (touches.length > 0) {
-                    mmx = touches[0].x;
-                    mmy = touches[0].y;
-                }
-            } else {
-                if (mouseX > NDX + 100) {
-                    mmx = mouseX;
-                    mmy = mouseY;
-                }
-            }
-        }
-
-        function drawMainElements(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2) {
+        function drawMainElements(NDX, NDY, cadreSize, roseSize, flecheLength, NDBX1, NDBY1, NDBX2, NDBY2) {
             if (imagesLoaded) {
-                // Cadre principal (avec ADF1 et ADF3 intégrés)
+                // Cadre principal
                 image(imgNDcadre, NDX, NDY, cadreSize, cadreSize);
                 image(imgNDmaquette, NDX, NDY+18, 31, 27);
 
@@ -289,17 +344,17 @@
                 image(imgNDrose, 0, 0, roseSize, roseSize); 
                 pop();
                 
-                // Flèches
+                // Flèches avec taille adaptative
                 push();
                 translate(NDX, NDY+15);
                 rotate(radians(QDM));  
-                image(flecheNDDouble, 0, 0, 17, 231);
+                image(flecheNDDouble, 0, 0, 17, flecheLength);
                 pop();
 
                 push();
                 translate(NDX, NDY+15);
                 rotate(radians(QDM1));  
-                image(flecheNDSimple, 0, 0, 20, 231);
+                image(flecheNDSimple, 0, 0, 20, flecheLength);
                 pop();
 
                 // Balises
@@ -314,8 +369,12 @@
         }
 
         function calculateNavigation(NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2) {
-            mx1 = mmx - NDBX1;
-            my1 = mmy - NDBY1;
+            // Ajuster les coordonnées pour le zoom
+            let adjustedMmx = (mmx - offsetX) / scale;
+            let adjustedMmy = (mmy - offsetY) / scale;
+
+            mx1 = adjustedMmx - NDBX1;
+            my1 = adjustedMmy - NDBY1;
             avion = createVector(mx1, my1);
             
             let angle1 = atan2(my1, mx1);
@@ -325,8 +384,8 @@
             QDM1 = (QDR1 + 180) % 360;
             GT = (QDM1 - rose + 360) % 360;
 
-            mx2 = mmx - NDBX2;
-            my2 = mmy - NDBY2;
+            mx2 = adjustedMmx - NDBX2;
+            my2 = adjustedMmy - NDBY2;
             avion1 = createVector(mx2, my2);
             
             let angle2 = atan2(my2, mx2);
@@ -338,12 +397,16 @@
         }
 
         function drawAircraft(NDX) {
-            const shouldShowAircraft = (isMobile && touches.length > 0) || (!isMobile && mouseX > NDX + 100);
+            // Ajuster les coordonnées pour le zoom
+            let adjustedMmx = (mmx - offsetX) / scale;
+            let adjustedMmy = (mmy - offsetY) / scale;
+
+            const shouldShowAircraft = (isMobile) || (!isMobile && mouseX > NDX + 100);
             
             if (shouldShowAircraft) {
                 if (!isMobile) noCursor();
                 push();
-                translate(mmx, mmy);
+                translate(adjustedMmx, adjustedMmy);
                 rotate(radians(rose));
                 if (imagesLoaded) {
                     image(imgPlane, 1, 5);
@@ -375,7 +438,7 @@
             text("QDM2 =", infoX + 5, infoY + textStep * 5);
             text("GT2  =", infoX + 5, infoY + textStep * 6);
 
-            // Valeurs cachées ou affichées selon l'état (CAP inclus)
+            // Valeurs cachées ou affichées selon l'état
             if (reponse) {
                 text(round(QDR1), infoX + 55, infoY);
                 text(round(QDM1), infoX + 55, infoY + textStep);
@@ -385,7 +448,7 @@
                 text(round(QDM), infoX + 55, infoY + textStep * 5);
                 text(round(GT1), infoX + 55, infoY + textStep * 6);
             } else {
-                // Tout caché, y compris le CAP
+                // Tout caché
                 text("---", infoX + 55, infoY);
                 text("---", infoX + 55, infoY + textStep);
                 text("---", infoX + 55, infoY + textStep * 2);
@@ -400,7 +463,8 @@
                 fill(0);
                 textSize(12);
                 textAlign(CENTER);
-                text("Touchez l'écran pour déplacer l'avion", width/2, 60);
+                text("Touchez l'écran pour déplacer l'avion", width/2, 50);
+                text("Pincez pour zoomer", width/2, 70);
                 textAlign(LEFT);
             }
 
@@ -408,7 +472,7 @@
             if (!isMobile) {
                 fill(0);
                 textSize(12);
-                text("Clic droit MAIN TENU: changer cap", infoX, infoY + textStep * 8);
+                text("Clic droit maintenu: changer cap", infoX, infoY + textStep * 8);
                 text("Touche 1 ou bouton: afficher/cacher valeurs", infoX, infoY + textStep * 9);
             }
         }
@@ -418,6 +482,12 @@
                 rightMousePressed = true;
                 lastUpdateTime = millis();
                 return false;
+            }
+            
+            // Déplacement de l'avion sur desktop
+            if (!isMobile && mouseButton === LEFT) {
+                mmx = mouseX;
+                mmy = mouseY;
             }
             return false;
         }
@@ -437,10 +507,48 @@
         }
 
         function touchStarted() {
+            if (isMobile && touches.length === 1) {
+                // Déplacement de l'avion avec un seul doigt
+                mmx = touches[0].x;
+                mmy = touches[0].y;
+                isDragging = true;
+                lastTouchX = touches[0].x;
+                lastTouchY = touches[0].y;
+            } else if (isMobile && touches.length === 2) {
+                // Zoom avec deux doigts
+                lastTouchDistance = dist(
+                    touches[0].x, touches[0].y,
+                    touches[1].x, touches[1].y
+                );
+            }
             return false;
         }
 
         function touchMoved() {
+            if (isMobile && touches.length === 1 && isDragging) {
+                // Déplacement de l'avion
+                mmx = touches[0].x;
+                mmy = touches[0].y;
+            } else if (isMobile && touches.length === 2) {
+                // Zoom
+                let currentDistance = dist(
+                    touches[0].x, touches[0].y,
+                    touches[1].x, touches[1].y
+                );
+                
+                let zoomFactor = currentDistance / lastTouchDistance;
+                scale *= zoomFactor;
+                scale = constrain(scale, 0.5, 3.0); // Limites du zoom
+                
+                lastTouchDistance = currentDistance;
+            }
+            return false;
+        }
+
+        function touchEnded() {
+            if (isMobile && touches.length === 0) {
+                isDragging = false;
+            }
             return false;
         }
 
@@ -453,6 +561,7 @@
             return false;
         });
 
+        // Autoriser le zoom tactile
         document.addEventListener('gesturestart', function(e) {
             e.preventDefault();
         });
