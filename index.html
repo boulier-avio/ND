@@ -80,7 +80,7 @@
     </div>
 
     <script>
-        let imgNDcadre, imgNDmaquette, imgNDrose, imgADF1, imgADF3;
+        let imgNDcadre, imgNDmaquette, imgNDrose;
         let flecheNDDouble, flecheNDSimple, imgNDB, imgPlane;
         let rose = 0;
         let QDR1, QDR3, QDM, QDM1, GT, GT1;
@@ -105,8 +105,6 @@
                 imgNDcadre = loadImage('NDcadre.png');
                 imgNDmaquette = loadImage('NDmaquette.png');
                 imgNDrose = loadImage('NDrose.png');
-                imgADF1 = loadImage('ADF1.png');
-                imgADF3 = loadImage('ADF3.png');
                 flecheNDDouble = loadImage('NDDouble.png');
                 flecheNDSimple = loadImage('NDSimple.png');
                 imgNDB = loadImage('NDB.png');
@@ -128,8 +126,6 @@
             imgNDcadre = placeholder;
             imgNDmaquette = placeholder;
             imgNDrose = placeholder;
-            imgADF1 = placeholder;
-            imgADF3 = placeholder;
             flecheNDDouble = placeholder;
             flecheNDSimple = placeholder;
             imgNDB = placeholder;
@@ -282,24 +278,18 @@
 
         function drawMainElements(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2) {
             if (imagesLoaded) {
+                // Cadre principal (avec ADF1 et ADF3 intégrés)
                 image(imgNDcadre, NDX, NDY, cadreSize, cadreSize);
                 image(imgNDmaquette, NDX, NDY+18, 31, 27);
-                
-                // ADF1 et ADF3 mieux positionnés
-                if (isMobile) {
-                    image(imgADF1, width * 0.15, height * 0.1, 40, 22);
-                    image(imgADF3, width * 0.45, height * 0.1, 43, 27);
-                } else {
-                    image(imgADF1, 80, 100, 40, 22);
-                    image(imgADF3, 280, 100, 43, 27);
-                }
 
+                // Rose rotative
                 push();
                 translate(NDX, NDY+14);  
                 rotate(radians(-rose));
                 image(imgNDrose, 0, 0, roseSize, roseSize); 
                 pop();
                 
+                // Flèches
                 push();
                 translate(NDX, NDY+15);
                 rotate(radians(QDM));  
@@ -312,6 +302,7 @@
                 image(flecheNDSimple, 0, 0, 20, 231);
                 pop();
 
+                // Balises
                 image(imgNDB, NDBX1, NDBY1);
                 image(imgNDB, NDBX2, NDBY2);
             }
@@ -384,20 +375,21 @@
             text("QDM2 =", infoX + 5, infoY + textStep * 5);
             text("GT2  =", infoX + 5, infoY + textStep * 6);
 
-            // Valeurs cachées ou affichées selon l'état
+            // Valeurs cachées ou affichées selon l'état (CAP inclus)
             if (reponse) {
                 text(round(QDR1), infoX + 55, infoY);
                 text(round(QDM1), infoX + 55, infoY + textStep);
                 text(round(GT), infoX + 55, infoY + textStep * 2);
-                text(round(rose), infoX + 55, infoY + textStep * 3); // CAP restauré
+                text(round(rose), infoX + 55, infoY + textStep * 3);
                 text(round(QDR3), infoX + 55, infoY + textStep * 4);
                 text(round(QDM), infoX + 55, infoY + textStep * 5);
                 text(round(GT1), infoX + 55, infoY + textStep * 6);
             } else {
+                // Tout caché, y compris le CAP
                 text("---", infoX + 55, infoY);
                 text("---", infoX + 55, infoY + textStep);
                 text("---", infoX + 55, infoY + textStep * 2);
-                text(round(rose), infoX + 55, infoY + textStep * 3); // CAP toujours visible
+                text("---", infoX + 55, infoY + textStep * 3);
                 text("---", infoX + 55, infoY + textStep * 4);
                 text("---", infoX + 55, infoY + textStep * 5);
                 text("---", infoX + 55, infoY + textStep * 6);
