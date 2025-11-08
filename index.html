@@ -45,14 +45,25 @@
             padding: 5px 10px;
             border-radius: 10px;
         }
-        #debug {
+        .desktop-controls {
             position: fixed;
-            top: 10px;
-            left: 10px;
-            background: rgba(255,255,255,0.8);
-            padding: 5px;
-            font-size: 12px;
+            bottom: 20px;
+            left: 20px;
             z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .desktop-btn {
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 180px;
         }
     </style>
 </head>
@@ -63,7 +74,10 @@
         <button class="control-btn" id="capMoins">-</button>
         <button class="control-btn" id="toggleReponse" style="background: #007bff; font-size: 14px;">Rép</button>
     </div>
-    <div id="debug"></div>
+
+    <div class="desktop-controls">
+        <button class="desktop-btn" id="desktopToggleReponse">Afficher/Cacher Réponses</button>
+    </div>
 
     <script>
         let imgNDcadre, imgNDmaquette, imgNDrose, imgADF1, imgADF3;
@@ -80,7 +94,7 @@
         // Variables pour le contrôle continu du cap
         let rightMousePressed = false;
         let lastUpdateTime = 0;
-        const CAP_CHANGE_INTERVAL = 16; // ~60fps
+        const CAP_CHANGE_INTERVAL = 16;
 
         // Variables pour le contrôle mobile
         let capPlusPressed = false;
@@ -130,11 +144,9 @@
                       ('ontouchstart' in window) || 
                       (navigator.maxTouchPoints > 0);
             
-            // Créer le canvas
             let canvas = createCanvas(windowWidth, windowHeight);
             canvas.style('display', 'block');
             
-            // Position initiale de l'avion
             mmx = width / 2;
             mmy = height / 2;
             baliseLH = createVector(0, -10);
@@ -143,48 +155,53 @@
             rectMode(CENTER);
             textAlign(LEFT, CENTER);
             
-            // Configuration des boutons mobiles
-            setupMobileControls();
-            
-            // Masquer les boutons sur desktop
-            if (!isMobile) {
-                document.querySelector('.mobile-controls').style.display = 'none';
-            }
+            setupControls();
         }
 
-        function setupMobileControls() {
-            // Bouton +
-            document.getElementById('capPlus').addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                capPlusPressed = true;
-            }, {passive: false});
-            
-            document.getElementById('capPlus').addEventListener('touchend', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                capPlusPressed = false;
-            }, {passive: false});
-            
-            // Bouton -
-            document.getElementById('capMoins').addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                capMoinsPressed = true;
-            }, {passive: false});
-            
-            document.getElementById('capMoins').addEventListener('touchend', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                capMoinsPressed = false;
-            }, {passive: false});
-            
-            // Bouton Réponses
-            document.getElementById('toggleReponse').addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                reponse = !reponse;
-            }, {passive: false});
+        function setupControls() {
+            // Configuration mobile
+            if (isMobile) {
+                document.getElementById('capPlus').addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    capPlusPressed = true;
+                }, {passive: false});
+                
+                document.getElementById('capPlus').addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    capPlusPressed = false;
+                }, {passive: false});
+                
+                document.getElementById('capMoins').addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    capMoinsPressed = true;
+                }, {passive: false});
+                
+                document.getElementById('capMoins').addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    capMoinsPressed = false;
+                }, {passive: false});
+                
+                document.getElementById('toggleReponse').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    reponse = !reponse;
+                }, {passive: false});
+                
+                document.querySelector('.mobile-controls').style.display = 'flex';
+                document.querySelector('.desktop-controls').style.display = 'none';
+            } else {
+                // Configuration desktop
+                document.getElementById('desktopToggleReponse').addEventListener('click', function(e) {
+                    reponse = !reponse;
+                });
+                
+                document.querySelector('.mobile-controls').style.display = 'none';
+                document.querySelector('.desktop-controls').style.display = 'flex';
+            }
         }
 
         function draw() {
@@ -238,11 +255,9 @@
         function updateCapContinuous() {
             let currentTime = millis();
             if (currentTime - lastUpdateTime > CAP_CHANGE_INTERVAL) {
-                // Desktop: clic droit maintenu
                 if (!isMobile && rightMousePressed) {
                     rose = (rose + 1) % 360;
                 }
-                // Mobile: boutons + et - maintenus
                 if (isMobile) {
                     if (capPlusPressed) rose = (rose + 2) % 360;
                     if (capMoinsPressed) rose = (rose - 2 + 360) % 360;
@@ -253,13 +268,11 @@
 
         function updateAircraftPosition(NDX) {
             if (isMobile) {
-                // Sur mobile, l'avion reste à la dernière position touchée
                 if (touches.length > 0) {
                     mmx = touches[0].x;
                     mmy = touches[0].y;
                 }
             } else {
-                // Sur desktop, l'avion suit la souris
                 if (mouseX > NDX + 100) {
                     mmx = mouseX;
                     mmy = mouseY;
@@ -269,27 +282,24 @@
 
         function drawMainElements(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2) {
             if (imagesLoaded) {
-                // Cadre principal
                 image(imgNDcadre, NDX, NDY, cadreSize, cadreSize);
                 image(imgNDmaquette, NDX, NDY+18, 31, 27);
                 
-                // ADF1 et ADF3 repositionnés correctement
+                // ADF1 et ADF3 mieux positionnés
                 if (isMobile) {
-                    image(imgADF1, width * 0.1, height * 0.15, 51, 28);
-                    image(imgADF3, width * 0.5, height * 0.15, 54, 34);
+                    image(imgADF1, width * 0.15, height * 0.1, 40, 22);
+                    image(imgADF3, width * 0.45, height * 0.1, 43, 27);
                 } else {
-                    image(imgADF1, 60, 311, 51, 28);
-                    image(imgADF3, 300, 311, 54, 34);
+                    image(imgADF1, 80, 100, 40, 22);
+                    image(imgADF3, 280, 100, 43, 27);
                 }
 
-                // Rose rotative
                 push();
                 translate(NDX, NDY+14);  
                 rotate(radians(-rose));
                 image(imgNDrose, 0, 0, roseSize, roseSize); 
                 pop();
                 
-                // Flèches
                 push();
                 translate(NDX, NDY+15);
                 rotate(radians(QDM));  
@@ -302,12 +312,10 @@
                 image(flecheNDSimple, 0, 0, 20, 231);
                 pop();
 
-                // Balises
                 image(imgNDB, NDBX1, NDBY1);
                 image(imgNDB, NDBX2, NDBY2);
             }
 
-            // Marqueur fixe
             stroke(233, 255, 3);
             strokeWeight(2);
             line(NDX, NDY-140, NDX, NDY-120);
@@ -315,7 +323,6 @@
         }
 
         function calculateNavigation(NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2) {
-            // Calcul pour la première balise
             mx1 = mmx - NDBX1;
             my1 = mmy - NDBY1;
             avion = createVector(mx1, my1);
@@ -327,7 +334,6 @@
             QDM1 = (QDR1 + 180) % 360;
             GT = (QDM1 - rose + 360) % 360;
 
-            // Calcul pour la deuxième balise
             mx2 = mmx - NDBX2;
             my2 = mmy - NDBY2;
             avion1 = createVector(mx2, my2);
@@ -362,49 +368,56 @@
         }
 
         function drawInterface() {
-            // Position adaptative du panneau d'info
             let infoX = isMobile ? 10 : 5;
             let infoY = isMobile ? height * 0.65 : 400;
             let textStep = 15;
 
-            // Affichage des valeurs (caché par défaut, affiché seulement si reponse = true)
             fill(0);
             textSize(isMobile ? 11 : 12);
             
-            if (reponse) {
-                text("QDR1 = " + round(QDR1), infoX + 55, infoY);
-                text("QDM1 = " + round(QDM1), infoX + 55, infoY + textStep);
-                text("GT1  = " + round(GT), infoX + 55, infoY + textStep * 2);
-                text("QDR2 = " + round(QDR3), infoX + 55, infoY + textStep * 3);
-                text("QDM2 = " + round(QDM), infoX + 55, infoY + textStep * 4);
-                text("GT2  = " + round(GT1), infoX + 55, infoY + textStep * 5);
-            } else {
-                // Tout caché sauf les labels
-                text("QDR1 = ---", infoX + 55, infoY);
-                text("QDM1 = ---", infoX + 55, infoY + textStep);
-                text("GT1  = ---", infoX + 55, infoY + textStep * 2);
-                text("QDR2 = ---", infoX + 55, infoY + textStep * 3);
-                text("QDM2 = ---", infoX + 55, infoY + textStep * 4);
-                text("GT2  = ---", infoX + 55, infoY + textStep * 5);
-            }
+            // Labels toujours visibles
+            text("QDR1 =", infoX + 5, infoY);
+            text("QDM1 =", infoX + 5, infoY + textStep);
+            text("GT1  =", infoX + 5, infoY + textStep * 2);
+            text("CAP  =", infoX + 5, infoY + textStep * 3);
+            text("QDR2 =", infoX + 5, infoY + textStep * 4);
+            text("QDM2 =", infoX + 5, infoY + textStep * 5);
+            text("GT2  =", infoX + 5, infoY + textStep * 6);
 
-            
+            // Valeurs cachées ou affichées selon l'état
+            if (reponse) {
+                text(round(QDR1), infoX + 55, infoY);
+                text(round(QDM1), infoX + 55, infoY + textStep);
+                text(round(GT), infoX + 55, infoY + textStep * 2);
+                text(round(rose), infoX + 55, infoY + textStep * 3); // CAP restauré
+                text(round(QDR3), infoX + 55, infoY + textStep * 4);
+                text(round(QDM), infoX + 55, infoY + textStep * 5);
+                text(round(GT1), infoX + 55, infoY + textStep * 6);
+            } else {
+                text("---", infoX + 55, infoY);
+                text("---", infoX + 55, infoY + textStep);
+                text("---", infoX + 55, infoY + textStep * 2);
+                text(round(rose), infoX + 55, infoY + textStep * 3); // CAP toujours visible
+                text("---", infoX + 55, infoY + textStep * 4);
+                text("---", infoX + 55, infoY + textStep * 5);
+                text("---", infoX + 55, infoY + textStep * 6);
+            }
 
             // Instructions mobiles
             if (isMobile) {
                 fill(0);
-                textSize(14);
+                textSize(12);
                 textAlign(CENTER);
-                text("Touchez l'écran pour déplacer l'avion", width/2, 50);
+                text("Touchez l'écran pour déplacer l'avion", width/2, 60);
                 textAlign(LEFT);
             }
 
             // Aide desktop
-            if (!isMobile && mouseX > infoX && mouseX < infoX + 95 && 
-                mouseY > infoY + 110 && mouseY < infoY + 135) {
-                fill(255, 0, 0);
-                text("Clic droit MAIN TENU: changer cap", infoX + 6, infoY + 150);
-                text("Touche 1: afficher valeurs", infoX + 6, infoY + 165);
+            if (!isMobile) {
+                fill(0);
+                textSize(12);
+                text("Clic droit MAIN TENU: changer cap", infoX, infoY + textStep * 8);
+                text("Touche 1 ou bouton: afficher/cacher valeurs", infoX, infoY + textStep * 9);
             }
         }
 
@@ -443,13 +456,11 @@
             resizeCanvas(windowWidth, windowHeight);
         }
 
-        // Empêche tous les menus contextuels
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             return false;
         });
 
-        // Empêche le zoom tactile
         document.addEventListener('gesturestart', function(e) {
             e.preventDefault();
         });
