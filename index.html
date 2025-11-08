@@ -21,6 +21,9 @@
             bottom: 20px;
             right: 20px;
             z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         .control-btn {
             width: 60px;
@@ -32,6 +35,15 @@
             font-size: 24px;
             margin: 5px;
             touch-action: manipulation;
+        }
+        .cap-display {
+            color: black;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background: rgba(255,255,255,0.8);
+            padding: 5px 10px;
+            border-radius: 10px;
         }
         #debug {
             position: fixed;
@@ -46,8 +58,10 @@
 </head>
 <body>
     <div class="mobile-controls">
+        <div class="cap-display">CAP: <span id="capValue">0</span>°</div>
         <button class="control-btn" id="capPlus">+</button>
         <button class="control-btn" id="capMoins">-</button>
+        <button class="control-btn" id="toggleReponse" style="background: #007bff; font-size: 14px;">Rép</button>
     </div>
     <div id="debug"></div>
 
@@ -68,9 +82,29 @@
         let lastUpdateTime = 0;
         const CAP_CHANGE_INTERVAL = 16; // ~60fps
 
-        // Fonction pour créer des images de remplacement si les vraies ne chargent pas
+        // Variables pour le contrôle mobile
+        let capPlusPressed = false;
+        let capMoinsPressed = false;
+
+        function preload() {
+            try {
+                imgNDcadre = loadImage('NDcadre.png');
+                imgNDmaquette = loadImage('NDmaquette.png');
+                imgNDrose = loadImage('NDrose.png');
+                imgADF1 = loadImage('ADF1.png');
+                imgADF3 = loadImage('ADF3.png');
+                flecheNDDouble = loadImage('NDDouble.png');
+                flecheNDSimple = loadImage('NDSimple.png');
+                imgNDB = loadImage('NDB.png');
+                imgPlane = loadImage('plane.png');
+                imagesLoaded = true;
+            } catch (e) {
+                console.log('Error loading images:', e);
+                createPlaceholderImages();
+            }
+        }
+
         function createPlaceholderImages() {
-            // Créer un canvas pour générer des images de placeholder
             let placeholder = createGraphics(100, 100);
             placeholder.background(200);
             placeholder.fill(100);
@@ -90,36 +124,13 @@
             imagesLoaded = true;
         }
 
-        function preload() {
-            try {
-                imgNDcadre = loadImage('NDcadre.png', 
-                    () => console.log('NDcadre loaded'),
-                    () => { console.log('NDcadre failed'); createPlaceholderImages(); }
-                );
-                imgNDmaquette = loadImage('NDmaquette.png');
-                imgNDrose = loadImage('NDrose.png');
-                imgADF1 = loadImage('ADF1.png');
-                imgADF3 = loadImage('ADF3.png');
-                flecheNDDouble = loadImage('NDDouble.png');
-                flecheNDSimple = loadImage('NDSimple.png');
-                imgNDB = loadImage('NDB.png');
-                imgPlane = loadImage('plane.png');
-                imagesLoaded = true;
-            } catch (e) {
-                console.log('Error loading images:', e);
-                createPlaceholderImages();
-            }
-        }
-
         function setup() {
-            // Détection mobile améliorée
+            // Détection mobile
             isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
                       ('ontouchstart' in window) || 
                       (navigator.maxTouchPoints > 0);
             
-            console.log('Mobile detection:', isMobile);
-            
-            // Créer le canvas en plein écran
+            // Créer le canvas
             let canvas = createCanvas(windowWidth, windowHeight);
             canvas.style('display', 'block');
             
@@ -133,70 +144,62 @@
             textAlign(LEFT, CENTER);
             
             // Configuration des boutons mobiles
-            if (isMobile) {
-                let capPlusPressed = false;
-                let capMoinsPressed = false;
-                
-                document.getElementById('capPlus').addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    capPlusPressed = true;
-                }, {passive: false});
-                
-                document.getElementById('capPlus').addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    capPlusPressed = false;
-                }, {passive: false});
-                
-                document.getElementById('capMoins').addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    capMoinsPressed = true;
-                }, {passive: false});
-                
-                document.getElementById('capMoins').addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    capMoinsPressed = false;
-                }, {passive: false});
-                
-                // Mise à jour continue du cap pour mobile
-                setInterval(() => {
-                    if (capPlusPressed) rose = (rose + 2) % 360;
-                    if (capMoinsPressed) rose = (rose - 2 + 360) % 360;
-                }, 16);
-                
-                // Cacher les boutons sur desktop
-                document.querySelector('.mobile-controls').style.display = 'block';
-            } else {
+            setupMobileControls();
+            
+            // Masquer les boutons sur desktop
+            if (!isMobile) {
                 document.querySelector('.mobile-controls').style.display = 'none';
             }
+        }
+
+        function setupMobileControls() {
+            // Bouton +
+            document.getElementById('capPlus').addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                capPlusPressed = true;
+            }, {passive: false});
+            
+            document.getElementById('capPlus').addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                capPlusPressed = false;
+            }, {passive: false});
+            
+            // Bouton -
+            document.getElementById('capMoins').addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                capMoinsPressed = true;
+            }, {passive: false});
+            
+            document.getElementById('capMoins').addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                capMoinsPressed = false;
+            }, {passive: false});
+            
+            // Bouton Réponses
+            document.getElementById('toggleReponse').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                reponse = !reponse;
+            }, {passive: false});
         }
 
         function draw() {
             background(255);
             
-            // Debug info
-            if (isMobile) {
-                document.getElementById('debug').innerHTML = 
-                    `Mobile: ${isMobile}<br>Touch: ${touches.length}<br>Cap: ${rose}°`;
-            }
+            // Mise à jour de l'affichage du cap
+            document.getElementById('capValue').textContent = round(rose);
 
-            // Mise à jour continue du cap si clic droit maintenu (desktop seulement)
-            if (!isMobile && rightMousePressed) {
-                let currentTime = millis();
-                if (currentTime - lastUpdateTime > CAP_CHANGE_INTERVAL) {
-                    rose = (rose + 1) % 360;
-                    lastUpdateTime = currentTime;
-                }
-            }
+            // Mise à jour continue du cap
+            updateCapContinuous();
 
             // Positions adaptatives
             let NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2;
             
             if (isMobile) {
-                // Layout vertical pour mobile
                 NDX = width * 0.3;
                 NDY = height * 0.25;
                 NDBX1 = width * 0.7;
@@ -204,7 +207,6 @@
                 NDBX2 = width * 0.7;
                 NDBY2 = height * 0.5;
             } else {
-                // Layout horizontal pour desktop
                 NDX = 183;
                 NDY = 183;
                 NDBX1 = 553;
@@ -214,37 +216,80 @@
             }
 
             // Contrôle de l'avion
-            if (isMobile) {
-                // Sur mobile, l'avion suit le doigt
-                if (touches.length > 0) {
-                    mmx = touches[0].x;
-                    mmy = touches[0].y;
-                }
-            } else {
-                // Sur desktop, l'avion suit la souris dans la zone de droite
-                if (mouseX > NDX + 100) {
-                    mmx = mouseX;
-                    mmy = mouseY;
-                }
-            }
+            updateAircraftPosition(NDX);
 
             // Tailles adaptatives
             let cadreSize = isMobile ? min(width, height) * 0.35 : 368;
             let roseSize = isMobile ? min(width, height) * 0.25 : 271;
 
             // Affichage des éléments principaux
+            drawMainElements(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2);
+
+            // Calculs de navigation
+            calculateNavigation(NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2);
+
+            // Affichage de l'avion
+            drawAircraft(NDX);
+
+            // Interface utilisateur
+            drawInterface();
+        }
+
+        function updateCapContinuous() {
+            let currentTime = millis();
+            if (currentTime - lastUpdateTime > CAP_CHANGE_INTERVAL) {
+                // Desktop: clic droit maintenu
+                if (!isMobile && rightMousePressed) {
+                    rose = (rose + 1) % 360;
+                }
+                // Mobile: boutons + et - maintenus
+                if (isMobile) {
+                    if (capPlusPressed) rose = (rose + 2) % 360;
+                    if (capMoinsPressed) rose = (rose - 2 + 360) % 360;
+                }
+                lastUpdateTime = currentTime;
+            }
+        }
+
+        function updateAircraftPosition(NDX) {
+            if (isMobile) {
+                // Sur mobile, l'avion reste à la dernière position touchée
+                if (touches.length > 0) {
+                    mmx = touches[0].x;
+                    mmy = touches[0].y;
+                }
+            } else {
+                // Sur desktop, l'avion suit la souris
+                if (mouseX > NDX + 100) {
+                    mmx = mouseX;
+                    mmy = mouseY;
+                }
+            }
+        }
+
+        function drawMainElements(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2) {
             if (imagesLoaded) {
+                // Cadre principal
                 image(imgNDcadre, NDX, NDY, cadreSize, cadreSize);
                 image(imgNDmaquette, NDX, NDY+18, 31, 27);
-                image(imgADF1, 60, 311, 51, 28);
-                image(imgADF3, 300, 311, 54, 34);
+                
+                // ADF1 et ADF3 repositionnés correctement
+                if (isMobile) {
+                    image(imgADF1, width * 0.1, height * 0.15, 51, 28);
+                    image(imgADF3, width * 0.5, height * 0.15, 54, 34);
+                } else {
+                    image(imgADF1, 60, 311, 51, 28);
+                    image(imgADF3, 300, 311, 54, 34);
+                }
 
+                // Rose rotative
                 push();
                 translate(NDX, NDY+14);  
                 rotate(radians(-rose));
                 image(imgNDrose, 0, 0, roseSize, roseSize); 
                 pop();
                 
+                // Flèches
                 push();
                 translate(NDX, NDY+15);
                 rotate(radians(QDM));  
@@ -257,6 +302,7 @@
                 image(flecheNDSimple, 0, 0, 20, 231);
                 pop();
 
+                // Balises
                 image(imgNDB, NDBX1, NDBY1);
                 image(imgNDB, NDBX2, NDBY2);
             }
@@ -266,31 +312,6 @@
             strokeWeight(2);
             line(NDX, NDY-140, NDX, NDY-120);
             noStroke();
-
-            // Calculs de navigation
-            calculateNavigation(NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2);
-
-            // Affichage de l'avion
-            if ((isMobile && touches.length > 0) || (!isMobile && mouseX > NDX + 100)) {
-                if (!isMobile) noCursor();
-                push();
-                translate(mmx, mmy);
-                rotate(radians(rose));
-                if (imagesLoaded) {
-                    image(imgPlane, 1, 5);
-                } else {
-                    // Fallback si image non chargée
-                    fill(255, 0, 0);
-                    triangle(-15, -10, 15, -10, 0, -25);
-                    rect(-5, 0, 10, 15);
-                }
-                pop();
-            } else {
-                if (!isMobile) cursor(ARROW);
-            }
-
-            // Interface utilisateur
-            drawInterface();
         }
 
         function calculateNavigation(NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2) {
@@ -319,20 +340,34 @@
             GT1 = (QDM - rose + 360) % 360;
         }
 
+        function drawAircraft(NDX) {
+            const shouldShowAircraft = (isMobile && touches.length > 0) || (!isMobile && mouseX > NDX + 100);
+            
+            if (shouldShowAircraft) {
+                if (!isMobile) noCursor();
+                push();
+                translate(mmx, mmy);
+                rotate(radians(rose));
+                if (imagesLoaded) {
+                    image(imgPlane, 1, 5);
+                } else {
+                    fill(255, 0, 0);
+                    triangle(-15, -10, 15, -10, 0, -25);
+                    rect(-5, 0, 10, 15);
+                }
+                pop();
+            } else {
+                if (!isMobile) cursor(ARROW);
+            }
+        }
+
         function drawInterface() {
             // Position adaptative du panneau d'info
             let infoX = isMobile ? 10 : 5;
             let infoY = isMobile ? height * 0.65 : 400;
             let textStep = 15;
 
-            // Bouton infos
-            fill(0);
-            rect(infoX + 45, infoY + 130, 90, 25);
-            fill(255);
-            textSize(12);
-            text("infos", infoX + 45, infoY + 130);
-
-            // Affichage des valeurs
+            // Affichage des valeurs (caché par défaut, affiché seulement si reponse = true)
             fill(0);
             textSize(isMobile ? 11 : 12);
             
@@ -340,28 +375,26 @@
                 text("QDR1 = " + round(QDR1), infoX + 55, infoY);
                 text("QDM1 = " + round(QDM1), infoX + 55, infoY + textStep);
                 text("GT1  = " + round(GT), infoX + 55, infoY + textStep * 2);
-                text("CAP  = " + round(rose), infoX + 55, infoY + textStep * 3);
-                text("QDR2 = " + round(QDR3), infoX + 55, infoY + textStep * 4);
-                text("QDM2 = " + round(QDM), infoX + 55, infoY + textStep * 5);
-                text("GT2  = " + round(GT1), infoX + 55, infoY + textStep * 6);
+                text("QDR2 = " + round(QDR3), infoX + 55, infoY + textStep * 3);
+                text("QDM2 = " + round(QDM), infoX + 55, infoY + textStep * 4);
+                text("GT2  = " + round(GT1), infoX + 55, infoY + textStep * 5);
             } else {
+                // Tout caché sauf les labels
                 text("QDR1 = ---", infoX + 55, infoY);
                 text("QDM1 = ---", infoX + 55, infoY + textStep);
                 text("GT1  = ---", infoX + 55, infoY + textStep * 2);
-                text("CAP  = " + round(rose), infoX + 55, infoY + textStep * 3);
-                text("QDR2 = ---", infoX + 55, infoY + textStep * 4);
-                text("QDM2 = ---", infoX + 55, infoY + textStep * 5);
-                text("GT2  = ---", infoX + 55, infoY + textStep * 6);
+                text("QDR2 = ---", infoX + 55, infoY + textStep * 3);
+                text("QDM2 = ---", infoX + 55, infoY + textStep * 4);
+                text("GT2  = ---", infoX + 55, infoY + textStep * 5);
             }
 
-            // Labels
-            //text("QDR1 =", infoX + 5, infoY);
-            //text("QDM1 =", infoX + 5, infoY + textStep);
-            //text("GT1  =", infoX + 5, infoY + textStep * 2);
-            //text("CAP  =", infoX + 5, infoY + textStep * 3);
-            //text("QDR2 =", infoX + 5, infoY + textStep * 4);
-            //text("QDM2 =", infoX + 5, infoY + textStep * 5);
-          //  text("GT2  =", infoX + 5, infoY + textStep * 6);
+            // Labels toujours visibles
+            text("QDR1 =", infoX + 5, infoY);
+            text("QDM1 =", infoX + 5, infoY + textStep);
+            text("GT1  =", infoX + 5, infoY + textStep * 2);
+            text("QDR2 =", infoX + 5, infoY + textStep * 3);
+            text("QDM2 =", infoX + 5, infoY + textStep * 4);
+            text("GT2  =", infoX + 5, infoY + textStep * 5);
 
             // Instructions mobiles
             if (isMobile) {
@@ -372,7 +405,7 @@
                 textAlign(LEFT);
             }
 
-            // Aide au survol (desktop seulement)
+            // Aide desktop
             if (!isMobile && mouseX > infoX && mouseX < infoX + 95 && 
                 mouseY > infoY + 110 && mouseY < infoY + 135) {
                 fill(255, 0, 0);
@@ -405,12 +438,10 @@
         }
 
         function touchStarted() {
-            // Empêche les comportements par défaut du navigateur
             return false;
         }
 
         function touchMoved() {
-            // Empêche le défilement
             return false;
         }
 
