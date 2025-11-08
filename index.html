@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>BOULIER gisement ADF sur ND</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js"></script>
     <style>
@@ -47,7 +47,7 @@
         }
         .desktop-controls {
             position: fixed;
-            bottom: 20px;
+            bottom: 80px; /* Plus d'espace pour le contact */
             left: 20px;
             z-index: 100;
             display: flex;
@@ -68,14 +68,15 @@
         }
         .contact-info {
             position: fixed;
-            bottom: 10px;
-            left: 10px;
+            bottom: 20px; /* Position ajustée */
+            left: 20px;
             font-size: 12px;
             color: #666;
             z-index: 100;
-            background: rgba(255,255,255,0.8);
-            padding: 5px 10px;
+            background: rgba(255,255,255,0.9);
+            padding: 8px 12px;
             border-radius: 5px;
+            border: 1px solid #ccc;
         }
         .contact-info a {
             color: #0066cc;
@@ -132,22 +133,45 @@
         let lastTouchDistance = 0;
 
         function preload() {
-            try {
-                imgNDcadre = loadImage('NDcadre.png');
-                imgNDmaquette = loadImage('NDmaquette.png');
-                imgNDrose = loadImage('NDrose.png');
-                flecheNDDouble = loadImage('NDDouble.png');
-                flecheNDSimple = loadImage('NDSimple.png');
-                imgNDB = loadImage('NDB.png');
-                imgPlane = loadImage('plane.png');
-                imagesLoaded = true;
-            } catch (e) {
-                console.log('Error loading images:', e);
-                createPlaceholderImages();
-            }
+            // Chargement des images avec gestion d'erreur
+            imgNDcadre = loadImage('NDcadre.png', 
+                function() { console.log('NDcadre loaded'); },
+                function() { console.error('NDcadre failed to load'); }
+            );
+            imgNDmaquette = loadImage('NDmaquette.png', 
+                function() { console.log('NDmaquette loaded'); },
+                function() { console.error('NDmaquette failed to load'); }
+            );
+            imgNDrose = loadImage('NDrose.png', 
+                function() { console.log('NDrose loaded'); },
+                function() { console.error('NDrose failed to load'); }
+            );
+            flecheNDDouble = loadImage('NDDouble.png', 
+                function() { console.log('NDDouble loaded'); },
+                function() { console.error('NDDouble failed to load'); }
+            );
+            flecheNDSimple = loadImage('NDSimple.png', 
+                function() { console.log('NDSimple loaded'); },
+                function() { console.error('NDSimple failed to load'); }
+            );
+            imgNDB = loadImage('NDB.png', 
+                function() { console.log('NDB loaded'); },
+                function() { console.error('NDB failed to load'); }
+            );
+            imgPlane = loadImage('plane.png', 
+                function() { 
+                    console.log('plane loaded'); 
+                    imagesLoaded = true;
+                },
+                function() { 
+                    console.error('plane failed to load'); 
+                    imagesLoaded = true;
+                }
+            );
         }
 
         function createPlaceholderImages() {
+            console.log('Creating placeholder images');
             let placeholder = createGraphics(100, 100);
             placeholder.background(200);
             placeholder.fill(100);
@@ -171,6 +195,8 @@
                       ('ontouchstart' in window) || 
                       (navigator.maxTouchPoints > 0);
             
+            console.log('Is Mobile:', isMobile);
+            
             let canvas = createCanvas(windowWidth, windowHeight);
             canvas.style('display', 'block');
             
@@ -182,6 +208,14 @@
             imageMode(CENTER);
             rectMode(CENTER);
             textAlign(LEFT, CENTER);
+            
+            // Vérifier si les images sont chargées après un délai
+            setTimeout(function() {
+                if (!imagesLoaded) {
+                    console.log('Images not loaded, creating placeholders');
+                    createPlaceholderImages();
+                }
+            }, 2000);
             
             setupControls();
         }
@@ -271,7 +305,7 @@
                     NDBY2 = height * 0.5;
                 }
             } else {
-                // Desktop
+                // Desktop - positions fixes
                 NDX = 183;
                 NDY = 183;
                 NDBX1 = 553;
@@ -296,7 +330,7 @@
                     flecheLength = 200;
                 }
             } else {
-                // Desktop
+                // Desktop - tailles fixes
                 cadreSize = 368;
                 roseSize = 271;
                 flecheLength = 231;
@@ -333,39 +367,72 @@
 
         function drawMainElements(NDX, NDY, cadreSize, roseSize, flecheLength, NDBX1, NDBY1, NDBX2, NDBY2) {
             if (imagesLoaded) {
-                // Cadre principal
-                image(imgNDcadre, NDX, NDY, cadreSize, cadreSize);
-                image(imgNDmaquette, NDX, NDY+18, 31, 27);
+                try {
+                    // Cadre principal
+                    image(imgNDcadre, NDX, NDY, cadreSize, cadreSize);
+                    image(imgNDmaquette, NDX, NDY+18, 31, 27);
 
-                // Rose rotative
-                push();
-                translate(NDX, NDY+14);  
-                rotate(radians(-rose));
-                image(imgNDrose, 0, 0, roseSize, roseSize); 
-                pop();
-                
-                // Flèches avec taille adaptative
-                push();
-                translate(NDX, NDY+15);
-                rotate(radians(QDM));  
-                image(flecheNDDouble, 0, 0, 17, flecheLength);
-                pop();
+                    // Rose rotative
+                    push();
+                    translate(NDX, NDY+14);  
+                    rotate(radians(-rose));
+                    image(imgNDrose, 0, 0, roseSize, roseSize); 
+                    pop();
+                    
+                    // Flèches avec taille adaptative
+                    push();
+                    translate(NDX, NDY+15);
+                    rotate(radians(QDM));  
+                    image(flecheNDDouble, 0, 0, 17, flecheLength);
+                    pop();
 
-                push();
-                translate(NDX, NDY+15);
-                rotate(radians(QDM1));  
-                image(flecheNDSimple, 0, 0, 20, flecheLength);
-                pop();
+                    push();
+                    translate(NDX, NDY+15);
+                    rotate(radians(QDM1));  
+                    image(flecheNDSimple, 0, 0, 20, flecheLength);
+                    pop();
 
-                // Balises
-                image(imgNDB, NDBX1, NDBY1);
-                image(imgNDB, NDBX2, NDBY2);
+                    // Balises
+                    image(imgNDB, NDBX1, NDBY1);
+                    image(imgNDB, NDBX2, NDBY2);
+                } catch (e) {
+                    console.error('Error drawing images:', e);
+                    // Fallback si erreur de dessin
+                    drawFallbackGraphics(NDX, NDY, cadreSize, roseSize);
+                }
+            } else {
+                // Fallback si images pas chargées
+                drawFallbackGraphics(NDX, NDY, cadreSize, roseSize);
             }
 
             stroke(233, 255, 3);
             strokeWeight(2);
             line(NDX, NDY-140, NDX, NDY-120);
             noStroke();
+        }
+
+        function drawFallbackGraphics(NDX, NDY, cadreSize, roseSize) {
+            // Cadre
+            stroke(0);
+            strokeWeight(2);
+            noFill();
+            rect(NDX, NDY, cadreSize, cadreSize);
+            
+            // Rose
+            stroke(100);
+            strokeWeight(1);
+            noFill();
+            circle(NDX, NDY, roseSize);
+            
+            // Avion maquette
+            fill(100);
+            noStroke();
+            rect(NDX-15, NDY, 30, 10);
+            
+            // Balises
+            fill(255, 0, 0);
+            circle(NDX + 200, NDY, 20);
+            circle(NDX + 300, NDY + 100, 20);
         }
 
         function calculateNavigation(NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2) {
@@ -409,8 +476,16 @@
                 translate(adjustedMmx, adjustedMmy);
                 rotate(radians(rose));
                 if (imagesLoaded) {
-                    image(imgPlane, 1, 5);
+                    try {
+                        image(imgPlane, 1, 5);
+                    } catch (e) {
+                        // Fallback pour l'avion
+                        fill(255, 0, 0);
+                        triangle(-15, -10, 15, -10, 0, -25);
+                        rect(-5, 0, 10, 15);
+                    }
                 } else {
+                    // Fallback pour l'avion
                     fill(255, 0, 0);
                     triangle(-15, -10, 15, -10, 0, -25);
                     rect(-5, 0, 10, 15);
