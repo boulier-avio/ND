@@ -5,8 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ND - Navigation Display</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
     <script>
         let imgNDcadre, imgNDmaquette, imgNDrose, imgADF1, imgADF3;
         let flecheNDDouble, flecheNDSimple, imgNDB, imgPlane;
@@ -128,11 +135,9 @@
             }
 
             fill(0);
-            rect(50, 554, 90, 25);
             rect(50, 584, 90, 25);
             fill(255);
             text("infos", 50, 584);
-            text("menu", 50, 554);
 
             fill(0);
             textSize(12);
@@ -167,12 +172,14 @@
         function mousePressed() {
             if (mouseButton === RIGHT) {
                 rose++;
+                return false; // Empêche le menu contextuel
             }
             
             if (mouseButton === LEFT && mouseX > 366) {
                 mmx = mouseX;
                 mmy = mouseY;
             }
+            return false; // Empêche le menu contextuel pour tous les clics
         }
 
         function keyPressed() {
@@ -180,6 +187,12 @@
                 reponse = !reponse;
             }
         }
+
+        // Empêche le menu contextuel sur tout le document
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
     </script>
 </body>
 </html>
