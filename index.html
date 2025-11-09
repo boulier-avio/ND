@@ -136,6 +136,15 @@
         // Variable pour contrôler le déplacement de l'avion
         let aircraftMoving = false;
 
+        // Variables pour la zone de délimitation des balises
+        let baliseZone = {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+            padding: 50 // Marge autour des balises
+        };
+
         function preload() {
             // Chargement des images avec chemins relatifs
             imgNDcadre = loadImage('NDcadre.png');
@@ -161,7 +170,7 @@
             let canvas = createCanvas(windowWidth, windowHeight);
             canvas.style('display', 'block');
             
-            // Position initiale de l'avion au centre
+            // Position initiale de l'avion au centre de la zone des balises
             mmx = width / 2;
             mmy = height / 2;
             baliseLH = createVector(0, -10);
@@ -248,11 +257,11 @@
                 if (windowWidth > windowHeight) {
                     // Mode paysage - layout horizontal
                     NDX = width * 0.25;
-                    NDY = height * 0.4;
+                    NDY = height * 0.3;
                     NDBX1 = width * 0.65;
-                    NDBY1 = height * 0.3;
+                    NDBY1 = height * 0.25;
                     NDBX2 = width * 0.65;
-                    NDBY2 = height * 0.6;
+                    NDBY2 = height * 0.5;
                 } else {
                     // Mode portrait - layout vertical
                     NDX = width * 0.3;
@@ -272,6 +281,10 @@
                 NDBY2 = 383;
             }
 
+            // Calculer et dessiner la zone de délimitation des balises
+            calculateBaliseZone(NDBX1, NDBY1, NDBX2, NDBY2);
+            drawBaliseZone();
+
             // Tailles adaptatives
             let cadreSize, roseSize, flecheLength;
             
@@ -280,12 +293,12 @@
                     // Mode paysage - tailles réduites
                     cadreSize = min(width, height) * 0.3;
                     roseSize = min(width, height) * 0.22;
-                    flecheLength = roseSize * 0.85; // Flèches proportionnelles à la rose
+                    flecheLength = roseSize * 0.85;
                 } else {
                     // Mode portrait
                     cadreSize = min(width, height) * 0.35;
                     roseSize = min(width, height) * 0.25;
-                    flecheLength = roseSize * 0.85; // Flèches proportionnelles à la rose
+                    flecheLength = roseSize * 0.85;
                 }
             } else {
                 // Desktop - tailles fixes
@@ -309,6 +322,53 @@
             pop(); // Fin de la transformation
         }
 
+        function calculateBaliseZone(NDBX1, NDBY1, NDBX2, NDBY2) {
+            // Calculer les limites de la zone autour des balises
+            const minX = min(NDBX1, NDBX2) - baliseZone.padding;
+            const maxX = max(NDBX1, NDBX2) + baliseZone.padding;
+            const minY = min(NDBY1, NDBY2) - baliseZone.padding;
+            const maxY = max(NDBY1, NDBY2) + baliseZone.padding;
+            
+            baliseZone.x = minX;
+            baliseZone.y = minY;
+            baliseZone.width = maxX - minX;
+            baliseZone.height = maxY - minY;
+        }
+
+        function drawBaliseZone() {
+            // Dessiner le carré de délimitation autour des balises
+            stroke(0, 100, 255); // Bleu
+            strokeWeight(2);
+            noFill();
+            rect(baliseZone.x + baliseZone.width/2, baliseZone.y + baliseZone.height/2, 
+                 baliseZone.width, baliseZone.height);
+            noStroke();
+            
+            // Ajouter un texte explicatif
+            fill(0, 100, 255);
+            textSize(12);
+            textAlign(CENTER);
+            text("Zone de déplacement de l'avion", 
+                 baliseZone.x + baliseZone.width/2, 
+                 baliseZone.y - 10);
+            textAlign(LEFT);
+        }
+
+        function isInBaliseZone(x, y) {
+            // Vérifier si les coordonnées sont dans la zone des balises
+            return x >= baliseZone.x && 
+                   x <= baliseZone.x + baliseZone.width && 
+                   y >= baliseZone.y && 
+                   y <= baliseZone.y + baliseZone.height;
+        }
+
+        function constrainToBaliseZone(x, y) {
+            // Contraindre les coordonnées à la zone des balises
+            let constrainedX = constrain(x, baliseZone.x, baliseZone.x + baliseZone.width);
+            let constrainedY = constrain(y, baliseZone.y, baliseZone.y + baliseZone.height);
+            return {x: constrainedX, y: constrainedY};
+        }
+
         function updateCapContinuous() {
             let currentTime = millis();
             if (currentTime - lastUpdateTime > CAP_CHANGE_INTERVAL) {
@@ -325,9 +385,26 @@
 
         function updateAircraftPosition() {
             // Sur desktop, l'avion suit la souris seulement si le clic gauche est maintenu
+            // et seulement dans la zone des balises
             if (!isMobile && leftMousePressed) {
-                mmx = mouseX;
-                mmy = mouseY;
+                let targetX = mouseX;
+                let targetY = mouseY;
+                
+                // Ajuster les coordonnées pour le zoom
+                let adjustedTargetX = (targetX - offsetX) / zoomScale;
+                let adjustedTargetY = (targetY - offsetY) / zoomScale;
+                
+                // Vérifier si la position cible est dans la zone des balises
+                if (isInBaliseZone(adjustedTargetX, adjustedTargetY)) {
+                    mmx = targetX;
+                    mmy = targetY;
+                } else {
+                    // Si en dehors, contraindre à la zone
+                    let constrained = constrainToBaliseZone(adjustedTargetX, adjustedTargetY);
+                    // Convertir retour aux coordonnées écran
+                    mmx = constrained.x * zoomScale + offsetX;
+                    mmy = constrained.y * zoomScale + offsetY;
+                }
             }
         }
 
@@ -336,24 +413,24 @@
                 try {
                     // Cadre principal
                     image(imgNDcadre, NDX, NDY, cadreSize, cadreSize);
-                    image(imgNDmaquette, NDX, NDY+18, cadreSize/10, cadreSize/10);
+                    image(imgNDmaquette, NDX, NDY, cadreSize/10, cadreSize/10);
 
                     // Rose rotative
                     push();
-                    translate(NDX, NDY+10);  
+                    translate(NDX, NDY);
                     rotate(radians(-rose));
                     image(imgNDrose, 0, 0, roseSize, roseSize); 
                     pop();
                     
-                    // Flèches avec taille adaptative proportionnelle à la rose
+                    // Flèches
                     push();
-                    translate(NDX, NDY+15);
+                    translate(NDX, NDY);
                     rotate(radians(QDM));  
                     image(flecheNDDouble, 0, 0, cadreSize, cadreSize);
                     pop();
 
                     push();
-                    translate(NDX, NDY+15);
+                    translate(NDX, NDY);
                     rotate(radians(QDM1));  
                     image(flecheNDSimple, 0, 0, cadreSize, cadreSize);
                     pop();
@@ -365,23 +442,23 @@
                     console.log('Images affichées avec succès');
                 } catch (e) {
                     console.error('Erreur lors de l\'affichage des images:', e);
-                    drawFallbackGraphics(NDX, NDY, cadreSize, roseSize);
+                    drawFallbackGraphics(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2);
                 }
             } else {
                 console.log('Images non chargées, utilisation du fallback');
-                drawFallbackGraphics(NDX, NDY, cadreSize, roseSize);
+                drawFallbackGraphics(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2);
             }
 
             // Trait jaune avec taille adaptative
             stroke(233, 255, 3);
             strokeWeight(2);
             let roseRadius = roseSize / 2;
-            let markerLength = isMobile ? roseSize * 0.08 : 20; // Longueur proportionnelle sur mobile
+            let markerLength = isMobile ? roseSize * 0.08 : 20;
             line(NDX, NDY - roseRadius + markerLength/2, NDX, NDY - roseRadius + markerLength); 
             noStroke();
         }
 
-        function drawFallbackGraphics(NDX, NDY, cadreSize, roseSize) {
+        function drawFallbackGraphics(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2) {
             // Cadre
             stroke(0);
             strokeWeight(2);
@@ -530,6 +607,7 @@
                 textAlign(CENTER);
                 text("Touchez l'écran pour déplacer l'avion", width/2, 50);
                 text("Pincez pour zoomer", width/2, 70);
+                text("Déplacement uniquement dans la zone bleue", width/2, 90);
                 textAlign(LEFT);
             }
 
@@ -537,7 +615,7 @@
             if (!isMobile) {
                 fill(0);
                 textSize(12);
-                text("Clic gauche maintenu: déplacer avion", infoX, infoY + textStep * 8);
+                text("Clic gauche maintenu: déplacer avion (zone bleue uniquement)", infoX, infoY + textStep * 8);
                 text("Clic droit maintenu: changer cap", infoX, infoY + textStep * 9);
                 text("Touche 1 ou bouton: afficher/cacher valeurs", infoX, infoY + textStep * 10);
             }
@@ -595,21 +673,28 @@
                 
                 // Si le toucher n'est pas sur un bouton, déplacer l'avion
                 if (!isOnButton) {
-                    aircraftMoving = true;
-                    mmx = touchX;
-                    mmy = touchY;
+                    // Ajuster les coordonnées pour le zoom
+                    let adjustedTouchX = (touchX - offsetX) / zoomScale;
+                    let adjustedTouchY = (touchY - offsetY) / zoomScale;
                     
-                    if (touches.length === 1) {
-                        // Déplacement de l'avion avec un seul doigt
-                        isDragging = true;
-                        lastTouchX = touchX;
-                        lastTouchY = touchY;
-                    } else if (touches.length === 2) {
-                        // Zoom avec deux doigts
-                        lastTouchDistance = dist(
-                            touches[0].x, touches[0].y,
-                            touches[1].x, touches[1].y
-                        );
+                    // Vérifier si le toucher est dans la zone des balises
+                    if (isInBaliseZone(adjustedTouchX, adjustedTouchY)) {
+                        aircraftMoving = true;
+                        mmx = touchX;
+                        mmy = touchY;
+                        
+                        if (touches.length === 1) {
+                            // Déplacement de l'avion avec un seul doigt
+                            isDragging = true;
+                            lastTouchX = touchX;
+                            lastTouchY = touchY;
+                        } else if (touches.length === 2) {
+                            // Zoom avec deux doigts
+                            lastTouchDistance = dist(
+                                touches[0].x, touches[0].y,
+                                touches[1].x, touches[1].y
+                            );
+                        }
                     }
                 }
             }
@@ -619,9 +704,25 @@
         function touchMoved(event) {
             if (isMobile && aircraftMoving) {
                 if (touches.length === 1 && isDragging) {
-                    // Déplacement de l'avion
-                    mmx = touches[0].x;
-                    mmy = touches[0].y;
+                    // Déplacement de l'avion avec contrainte à la zone
+                    let targetX = touches[0].x;
+                    let targetY = touches[0].y;
+                    
+                    // Ajuster les coordonnées pour le zoom
+                    let adjustedTargetX = (targetX - offsetX) / zoomScale;
+                    let adjustedTargetY = (targetY - offsetY) / zoomScale;
+                    
+                    // Vérifier si la position cible est dans la zone des balises
+                    if (isInBaliseZone(adjustedTargetX, adjustedTargetY)) {
+                        mmx = targetX;
+                        mmy = targetY;
+                    } else {
+                        // Si en dehors, contraindre à la zone
+                        let constrained = constrainToBaliseZone(adjustedTargetX, adjustedTargetY);
+                        // Convertir retour aux coordonnées écran
+                        mmx = constrained.x * zoomScale + offsetX;
+                        mmy = constrained.y * zoomScale + offsetY;
+                    }
                 } else if (touches.length === 2) {
                     // Zoom
                     let currentDistance = dist(
