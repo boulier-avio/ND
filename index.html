@@ -336,7 +336,7 @@
 
                     // Rose rotative
                     push();
-                    translate(NDX, NDY+14);  
+                    translate(NDX, NDY+10);  
                     rotate(radians(-rose));
                     image(imgNDrose, 0, 0, roseSize, roseSize); 
                     pop();
@@ -370,7 +370,10 @@
 
             stroke(233, 255, 3);
             strokeWeight(2);
-            line(NDX, NDY-140, NDX, NDY-120);
+            // Positionner le trait juste au bord de la rose tournante
+            let roseRadius = roseSize / 2;
+            let markerLength = 20; // Longueur du trait
+            line(NDX, NDY - roseRadius - markerLength/2, NDX, NDY - roseRadius + markerLength/2);
             noStroke();
         }
 
