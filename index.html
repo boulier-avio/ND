@@ -142,7 +142,7 @@
             y: 0,
             width: 0,
             height: 0,
-            padding: 50 // Marge autour des balises
+            padding: 100 // Marge augmentée autour des balises
         };
 
         function preload() {
@@ -171,8 +171,6 @@
             canvas.style('display', 'block');
             
             // Position initiale de l'avion au centre de la zone des balises
-            mmx = width / 2;
-            mmy = height / 2;
             baliseLH = createVector(0, -10);
             baliseRH = createVector(0, -10);
             imageMode(CENTER);
@@ -209,19 +207,22 @@
                     capMoinsPressed = false;
                 }, {passive: false});
                 
+                // CORRECTION : Utiliser click au lieu de touch pour le bouton réponse
                 document.getElementById('toggleReponse').addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     reponse = !reponse;
+                    console.log('Bouton réponse mobile cliqué, reponse =', reponse);
                 });
                 
                 document.querySelector('.mobile-controls').style.display = 'flex';
                 document.querySelector('.desktop-controls').style.display = 'none';
-                document.querySelector('.contact-info').style.display = 'none'; // Cacher le contact sur mobile
+                document.querySelector('.contact-info').style.display = 'none';
             } else {
                 // Configuration desktop
                 document.getElementById('desktopToggleReponse').addEventListener('click', function(e) {
                     reponse = !reponse;
+                    console.log('Bouton réponse desktop cliqué, reponse =', reponse);
                 });
                 
                 document.querySelector('.mobile-controls').style.display = 'none';
@@ -285,6 +286,15 @@
             calculateBaliseZone(NDBX1, NDBY1, NDBX2, NDBY2);
             drawBaliseZone();
 
+            // Positionner l'avion au centre de la zone bleue au premier affichage
+            if (mmx === undefined || mmy === undefined) {
+                let centerX = baliseZone.x + baliseZone.width / 2;
+                let centerY = baliseZone.y + baliseZone.height / 2;
+                // Convertir en coordonnées écran
+                mmx = centerX * zoomScale + offsetX;
+                mmy = centerY * zoomScale + offsetY;
+            }
+
             // Tailles adaptatives
             let cadreSize, roseSize, flecheLength;
             
@@ -323,7 +333,7 @@
         }
 
         function calculateBaliseZone(NDBX1, NDBY1, NDBX2, NDBY2) {
-            // Calculer les limites de la zone autour des balises
+            // Calculer les limites de la zone autour des balises avec marge agrandie
             const minX = min(NDBX1, NDBX2) - baliseZone.padding;
             const maxX = max(NDBX1, NDBX2) + baliseZone.padding;
             const minY = min(NDBY1, NDBY2) - baliseZone.padding;
@@ -337,8 +347,8 @@
 
         function drawBaliseZone() {
             // Dessiner le carré de délimitation autour des balises
-            stroke(0, 100, 255); // Bleu
-            strokeWeight(2);
+            stroke(0, 100, 255, 150); // Bleu semi-transparent
+            strokeWeight(3);
             noFill();
             rect(baliseZone.x + baliseZone.width/2, baliseZone.y + baliseZone.height/2, 
                  baliseZone.width, baliseZone.height);
@@ -350,7 +360,7 @@
             textAlign(CENTER);
             text("Zone de déplacement de l'avion", 
                  baliseZone.x + baliseZone.width/2, 
-                 baliseZone.y - 10);
+                 baliseZone.y - 15);
             textAlign(LEFT);
         }
 
@@ -398,13 +408,8 @@
                 if (isInBaliseZone(adjustedTargetX, adjustedTargetY)) {
                     mmx = targetX;
                     mmy = targetY;
-                } else {
-                    // Si en dehors, contraindre à la zone
-                    let constrained = constrainToBaliseZone(adjustedTargetX, adjustedTargetY);
-                    // Convertir retour aux coordonnées écran
-                    mmx = constrained.x * zoomScale + offsetX;
-                    mmy = constrained.y * zoomScale + offsetY;
                 }
+                // Si en dehors, on ne fait rien - l'avion ne bouge pas
             }
         }
 
@@ -439,13 +444,11 @@
                     image(imgNDB, NDBX1, NDBY1);
                     image(imgNDB, NDBX2, NDBY2);
                     
-                    console.log('Images affichées avec succès');
                 } catch (e) {
                     console.error('Erreur lors de l\'affichage des images:', e);
                     drawFallbackGraphics(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2);
                 }
             } else {
-                console.log('Images non chargées, utilisation du fallback');
                 drawFallbackGraphics(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2);
             }
 
@@ -531,30 +534,21 @@
             let adjustedMmx = (mmx - offsetX) / zoomScale;
             let adjustedMmy = (mmy - offsetY) / zoomScale;
 
-            // Sur desktop, afficher l'avion seulement si le clic gauche est maintenu
-            // Sur mobile, afficher l'avion seulement si on touche l'écran (sauf les boutons)
-            const shouldShowAircraft = (!isMobile && leftMousePressed) || (isMobile && aircraftMoving);
-            
-            if (shouldShowAircraft) {
-                if (!isMobile) noCursor();
-                push();
-                translate(adjustedMmx, adjustedMmy);
-                rotate(radians(rose));
-                if (imagesLoaded) {
-                    try {
-                        image(imgPlane, 1, 5);
-                    } catch (e) {
-                        // Fallback pour l'avion
-                        drawFallbackAircraft();
-                    }
-                } else {
-                    // Fallback pour l'avion
+            // Afficher l'avion en permanence maintenant
+            if (!isMobile) noCursor();
+            push();
+            translate(adjustedMmx, adjustedMmy);
+            rotate(radians(rose));
+            if (imagesLoaded) {
+                try {
+                    image(imgPlane, 1, 5);
+                } catch (e) {
                     drawFallbackAircraft();
                 }
-                pop();
             } else {
-                if (!isMobile) cursor(ARROW);
+                drawFallbackAircraft();
             }
+            pop();
         }
 
         function drawFallbackAircraft() {
@@ -605,9 +599,8 @@
                 fill(0);
                 textSize(12);
                 textAlign(CENTER);
-                text("Touchez l'écran pour déplacer l'avion", width/2, 50);
+                text("Touchez la zone bleue pour déplacer l'avion", width/2, 50);
                 text("Pincez pour zoomer", width/2, 70);
-                text("Déplacement uniquement dans la zone bleue", width/2, 90);
                 textAlign(LEFT);
             }
 
@@ -615,7 +608,7 @@
             if (!isMobile) {
                 fill(0);
                 textSize(12);
-                text("Clic gauche maintenu: déplacer avion (zone bleue uniquement)", infoX, infoY + textStep * 8);
+                text("Clic gauche dans la zone bleue: déplacer avion", infoX, infoY + textStep * 8);
                 text("Clic droit maintenu: changer cap", infoX, infoY + textStep * 9);
                 text("Touche 1 ou bouton: afficher/cacher valeurs", infoX, infoY + textStep * 10);
             }
@@ -628,7 +621,13 @@
                     lastUpdateTime = millis();
                     return false;
                 } else if (mouseButton === LEFT) {
-                    leftMousePressed = true;
+                    // Vérifier si le clic est dans la zone bleue
+                    let adjustedMouseX = (mouseX - offsetX) / zoomScale;
+                    let adjustedMouseY = (mouseY - offsetY) / zoomScale;
+                    
+                    if (isInBaliseZone(adjustedMouseX, adjustedMouseY)) {
+                        leftMousePressed = true;
+                    }
                     return false;
                 }
             }
@@ -651,6 +650,7 @@
         function keyPressed() {
             if (key === '1') {
                 reponse = !reponse;
+                console.log('Touche 1 pressée, reponse =', reponse);
             }
         }
 
@@ -671,7 +671,7 @@
                     isTouchInElement(touchX, touchY, capMoinsBtn) ||
                     isTouchInElement(touchX, touchY, reponseBtn);
                 
-                // Si le toucher n'est pas sur un bouton, déplacer l'avion
+                // Si le toucher n'est pas sur un bouton, vérifier si c'est dans la zone bleue
                 if (!isOnButton) {
                     // Ajuster les coordonnées pour le zoom
                     let adjustedTouchX = (touchX - offsetX) / zoomScale;
@@ -684,12 +684,10 @@
                         mmy = touchY;
                         
                         if (touches.length === 1) {
-                            // Déplacement de l'avion avec un seul doigt
                             isDragging = true;
                             lastTouchX = touchX;
                             lastTouchY = touchY;
                         } else if (touches.length === 2) {
-                            // Zoom avec deux doigts
                             lastTouchDistance = dist(
                                 touches[0].x, touches[0].y,
                                 touches[1].x, touches[1].y
@@ -716,13 +714,8 @@
                     if (isInBaliseZone(adjustedTargetX, adjustedTargetY)) {
                         mmx = targetX;
                         mmy = targetY;
-                    } else {
-                        // Si en dehors, contraindre à la zone
-                        let constrained = constrainToBaliseZone(adjustedTargetX, adjustedTargetY);
-                        // Convertir retour aux coordonnées écran
-                        mmx = constrained.x * zoomScale + offsetX;
-                        mmy = constrained.y * zoomScale + offsetY;
                     }
+                    // Si en dehors, on ne fait rien - l'avion ne bouge pas
                 } else if (touches.length === 2) {
                     // Zoom
                     let currentDistance = dist(
