@@ -124,8 +124,8 @@
         let capPlusPressed = false;
         let capMoinsPressed = false;
 
-        // Variables pour le zoom et déplacement - NOMS MODIFIÉS
-        let zoomScale = 1.0; // Changé de 'scale' à 'zoomScale'
+        // Variables pour le zoom et déplacement
+        let zoomScale = 1.0;
         let offsetX = 0;
         let offsetY = 0;
         let isDragging = false;
@@ -226,10 +226,15 @@
             // Mise à jour continue du cap
             updateCapContinuous();
 
-            // Appliquer la transformation de zoom et déplacement - VARIABLE CORRIGÉE
+            // Mise à jour de la position de l'avion sur desktop
+            if (!isMobile) {
+                updateAircraftPosition();
+            }
+
+            // Appliquer la transformation de zoom et déplacement
             push();
             translate(offsetX, offsetY);
-            scale(zoomScale); // Utilise zoomScale au lieu de scale
+            scale(zoomScale);
 
             // Positions adaptatives
             let NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2;
@@ -311,6 +316,14 @@
                     if (capMoinsPressed) rose = (rose - 2 + 360) % 360;
                 }
                 lastUpdateTime = currentTime;
+            }
+        }
+
+        function updateAircraftPosition() {
+            // Sur desktop, l'avion suit la souris en permanence
+            if (!isMobile) {
+                mmx = mouseX;
+                mmy = mouseY;
             }
         }
 
@@ -402,7 +415,7 @@
         }
 
         function calculateNavigation(NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2) {
-            // Ajuster les coordonnées pour le zoom - VARIABLE CORRIGÉE
+            // Ajuster les coordonnées pour le zoom
             let adjustedMmx = (mmx - offsetX) / zoomScale;
             let adjustedMmy = (mmy - offsetY) / zoomScale;
 
@@ -430,11 +443,12 @@
         }
 
         function drawAircraft(NDX) {
-            // Ajuster les coordonnées pour le zoom - VARIABLE CORRIGÉE
+            // Ajuster les coordonnées pour le zoom
             let adjustedMmx = (mmx - offsetX) / zoomScale;
             let adjustedMmy = (mmy - offsetY) / zoomScale;
 
-            const shouldShowAircraft = (isMobile) || (!isMobile && mouseX > NDX + 100);
+            // Sur desktop, toujours afficher l'avion qui suit la souris
+            const shouldShowAircraft = (!isMobile) || (isMobile && touches.length > 0);
             
             if (shouldShowAircraft) {
                 if (!isMobile) noCursor();
@@ -526,12 +540,6 @@
                 lastUpdateTime = millis();
                 return false;
             }
-            
-            // Déplacement de l'avion sur desktop
-            if (!isMobile && mouseButton === LEFT) {
-                mmx = mouseX;
-                mmy = mouseY;
-            }
             return false;
         }
 
@@ -573,15 +581,15 @@
                 mmx = touches[0].x;
                 mmy = touches[0].y;
             } else if (isMobile && touches.length === 2) {
-                // Zoom - VARIABLE CORRIGÉE
+                // Zoom
                 let currentDistance = dist(
                     touches[0].x, touches[0].y,
                     touches[1].x, touches[1].y
                 );
                 
                 let zoomFactor = currentDistance / lastTouchDistance;
-                zoomScale *= zoomFactor; // Utilise zoomScale
-                zoomScale = constrain(zoomScale, 0.5, 3.0); // Limites du zoom
+                zoomScale *= zoomFactor;
+                zoomScale = constrain(zoomScale, 0.5, 3.0);
                 
                 lastTouchDistance = currentDistance;
             }
