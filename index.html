@@ -244,11 +244,11 @@
                 if (windowWidth > windowHeight) {
                     // Mode paysage - layout horizontal
                     NDX = width * 0.25;
-                    NDY = height * 0.40;
+                    NDY = height * 0.4;
                     NDBX1 = width * 0.65;
                     NDBY1 = height * 0.3;
                     NDBX2 = width * 0.65;
-                    NDBY2 = height * 0.6  ;
+                    NDBY2 = height * 0.6;
                 } else {
                     // Mode portrait - layout vertical
                     NDX = width * 0.3;
@@ -336,19 +336,19 @@
 
                     // Rose rotative
                     push();
-                    translate(NDX, NDY);  
+                    translate(NDX, NDY+10);  
                     rotate(radians(-rose));
                     image(imgNDrose, 0, 0, roseSize, roseSize); 
                     pop();
                     
                     // Flèches avec taille adaptative proportionnelle à la rose
-                   let flecheWidthDouble = isMobile ? roseSize * 0.06 : 17;
-                   let flecheWidthSimple = isMobile ? roseSize * 0.07 : 20;
+                    let flecheWidthDouble = isMobile ? roseSize * 0.06 : 17;
+                    let flecheWidthSimple = isMobile ? roseSize * 0.07 : 20;
                     
                     push();
                     translate(NDX, NDY+15);
                     rotate(radians(QDM));  
-                    image(flecheNDDouble, 0, 0,flecheWidthDouble, flecheLength);
+                    image(flecheNDDouble, 0, 0, flecheWidthDouble, flecheLength);
                     pop();
 
                     push();
@@ -375,8 +375,8 @@
             stroke(233, 255, 3);
             strokeWeight(2);
             let roseRadius = roseSize / 2;
-            let markerLength = isMobile ? roseSize * 0.01 : 20; // Longueur proportionnelle sur mobile
-            line(NDX, NDY - roseRadius + markerLength, NDX, NDY - roseRadius + 40); 
+            let markerLength = isMobile ? roseSize * 0.08 : 20; // Longueur proportionnelle sur mobile
+            line(NDX, NDY - roseRadius + markerLength/2, NDX, NDY - roseRadius + markerLength); 
             noStroke();
         }
 
@@ -400,7 +400,7 @@
             
             // Balises
             fill(255, 0, 0);
-            circle(, NDBY1, 20);
+            circle(NDBX1, NDBY1, 20);
             circle(NDBX2, NDBY2, 20);
             
             // Flèches
@@ -420,12 +420,12 @@
             pop();
         }
 
-        function calculateNavigation(NDX, NDY, , NDBY1, NDBX2, NDBY2) {
+        function calculateNavigation(NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2) {
             // Ajuster les coordonnées pour le zoom
             let adjustedMmx = (mmx - offsetX) / zoomScale;
             let adjustedMmy = (mmy - offsetY) / zoomScale;
 
-            mx1 = adjustedMmx - ;
+            mx1 = adjustedMmx - NDBX1;
             my1 = adjustedMmy - NDBY1;
             avion = createVector(mx1, my1);
             
