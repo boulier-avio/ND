@@ -244,19 +244,19 @@
                 if (windowWidth > windowHeight) {
                     // Mode paysage - layout horizontal
                     NDX = width * 0.25;
-                    NDY = height * 0.30;
+                    NDY = height * 0.40;
                     NDBX1 = width * 0.65;
-                    NDBY1 = height * 0.2;
+                    NDBY1 = height * 0.3;
                     NDBX2 = width * 0.65;
-                    NDBY2 = height * 0.5  ;
+                    NDBY2 = height * 0.6  ;
                 } else {
                     // Mode portrait - layout vertical
                     NDX = width * 0.3;
-                    NDY = height * 0.15;
+                    NDY = height * 0.25;
                     NDBX1 = width * 0.7;
-                    NDBY1 = height * 0.15;
+                    NDBY1 = height * 0.25;
                     NDBX2 = width * 0.7;
-                    NDBY2 = height * 0.4;
+                    NDBY2 = height * 0.5;
                 }
             } else {
                 // Desktop - positions fixes
@@ -336,7 +336,7 @@
 
                     // Rose rotative
                     push();
-                    translate(NDX, NDY+10);  
+                    translate(NDX, NDY);  
                     rotate(radians(-rose));
                     image(imgNDrose, 0, 0, roseSize, roseSize); 
                     pop();
@@ -375,7 +375,7 @@
             stroke(233, 255, 3);
             strokeWeight(2);
             let roseRadius = roseSize / 2;
-            let markerLength = isMobile ? roseSize * 0.08 : 20; // Longueur proportionnelle sur mobile
+            let markerLength = isMobile ? roseSize * 0.01 : 20; // Longueur proportionnelle sur mobile
             line(NDX, NDY - roseRadius + markerLength, NDX, NDY - roseRadius + 40); 
             noStroke();
         }
