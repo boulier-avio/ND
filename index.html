@@ -276,12 +276,12 @@
                     // Mode paysage - tailles réduites
                     cadreSize = min(width, height) * 0.3;
                     roseSize = min(width, height) * 0.22;
-                    flecheLength = 150;
+                    flecheLength = roseSize * 0.85; // Flèches proportionnelles à la rose
                 } else {
                     // Mode portrait
                     cadreSize = min(width, height) * 0.35;
                     roseSize = min(width, height) * 0.25;
-                    flecheLength = 200;
+                    flecheLength = roseSize * 0.85; // Flèches proportionnelles à la rose
                 }
             } else {
                 // Desktop - tailles fixes
@@ -341,17 +341,20 @@
                     image(imgNDrose, 0, 0, roseSize, roseSize); 
                     pop();
                     
-                    // Flèches avec taille adaptative
+                    // Flèches avec taille adaptative proportionnelle à la rose
+                    let flecheWidthDouble = isMobile ? roseSize * 0.06 : 17;
+                    let flecheWidthSimple = isMobile ? roseSize * 0.07 : 20;
+                    
                     push();
                     translate(NDX, NDY+15);
                     rotate(radians(QDM));  
-                    image(flecheNDDouble, 0, 0, 17, flecheLength);
+                    image(flecheNDDouble, 0, 0, flecheWidthDouble, flecheLength);
                     pop();
 
                     push();
                     translate(NDX, NDY+15);
                     rotate(radians(QDM1));  
-                    image(flecheNDSimple, 0, 0, 20, flecheLength);
+                    image(flecheNDSimple, 0, 0, flecheWidthSimple, flecheLength);
                     pop();
 
                     // Balises
@@ -368,12 +371,12 @@
                 drawFallbackGraphics(NDX, NDY, cadreSize, roseSize);
             }
 
+            // Trait jaune avec taille adaptative
             stroke(233, 255, 3);
             strokeWeight(2);
-            // Positionner le trait juste au bord de la rose tournante
             let roseRadius = roseSize / 2;
-            let markerLength = 20; // Longueur du trait
-            line(NDX, NDY - roseRadius + markerLength/2 , NDX, NDY - roseRadius + 40); 
+            let markerLength = isMobile ? roseSize * 0.08 : 20; // Longueur proportionnelle sur mobile
+            line(NDX, NDY - roseRadius + markerLength/2, NDX, NDY - roseRadius + markerLength); 
             noStroke();
         }
 
