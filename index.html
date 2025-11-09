@@ -244,19 +244,19 @@
                 if (windowWidth > windowHeight) {
                     // Mode paysage - layout horizontal
                     NDX = width * 0.25;
-                    NDY = height * 0.4;
+                    NDY = height * 0.30;
                     NDBX1 = width * 0.65;
-                    NDBY1 = height * 0.3;
+                    NDBY1 = height * 0.2;
                     NDBX2 = width * 0.65;
-                    NDBY2 = height * 0.6;
+                    NDBY2 = height * 0.5  ;
                 } else {
                     // Mode portrait - layout vertical
                     NDX = width * 0.3;
-                    NDY = height * 0.25;
+                    NDY = height * 0.15;
                     NDBX1 = width * 0.7;
-                    NDBY1 = height * 0.25;
+                    NDBY1 = height * 0.15;
                     NDBX2 = width * 0.7;
-                    NDBY2 = height * 0.5;
+                    NDBY2 = height * 0.4;
                 }
             } else {
                 // Desktop - positions fixes
@@ -376,7 +376,7 @@
             strokeWeight(2);
             let roseRadius = roseSize / 2;
             let markerLength = isMobile ? roseSize * 0.08 : 20; // Longueur proportionnelle sur mobile
-            line(NDX, NDY - roseRadius + markerLength/2, NDX, NDY - roseRadius + markerLength); 
+            line(NDX, NDY - roseRadius + markerLength, NDX, NDY - roseRadius + 40); 
             noStroke();
         }
 
