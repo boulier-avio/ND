@@ -67,6 +67,9 @@
             cursor: pointer;
             width: 180px;
             text-align: center;
+            /* Important pour mobile */
+            touch-action: auto;
+            -webkit-tap-highlight-color: transparent;
         }
         .contact-info {
             position: fixed;
@@ -168,6 +171,19 @@
             canvas.style('display', 'block');
             canvas.style('cursor', 'default');
             
+            // Empêcher les événements de touch sur le canvas d'interférer avec les boutons
+            canvas.elt.addEventListener('touchstart', function(e) {
+                if (e.target === this) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            canvas.elt.addEventListener('touchmove', function(e) {
+                if (e.target === this) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
             baliseLH = createVector(0, -10);
             baliseRH = createVector(0, -10);
             imageMode(CENTER);
@@ -179,6 +195,7 @@
 
         function setupControls() {
             if (isMobile) {
+                // Boutons + et -
                 document.getElementById('capPlus').addEventListener('touchstart', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -203,11 +220,35 @@
                     capMoinsPressed = false;
                 }, {passive: false});
                 
-                // CORRECTION : Bouton réponse simplifié pour mobile
-                document.getElementById('toggleReponse').addEventListener('click', function() {
+                // SOLUTION ALTERNATIVE pour le bouton réponse
+                const reponseBtn = document.getElementById('toggleReponse');
+                
+                // Utiliser à la fois click et touchstart pour maximiser la compatibilité
+                reponseBtn.addEventListener('click', handleReponseClick);
+                reponseBtn.addEventListener('touchstart', handleReponseTouch);
+                
+                function handleReponseClick(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleReponse();
+                    return false;
+                }
+                
+                function handleReponseTouch(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleReponse();
+                    // Simuler un click pour certains navigateurs
+                    this.click();
+                    return false;
+                }
+                
+                function toggleReponse() {
                     reponse = !reponse;
-                    console.log('Bouton réponse mobile - reponse:', reponse);
-                });
+                    console.log('Bouton réponse - reponse:', reponse);
+                    // Forcer le redessin
+                    redraw();
+                }
                 
                 document.querySelector('.mobile-controls').style.display = 'flex';
                 document.querySelector('.desktop-controls').style.display = 'none';
@@ -338,12 +379,6 @@
                    x <= baliseZone.x + baliseZone.width && 
                    y >= baliseZone.y && 
                    y <= baliseZone.y + baliseZone.height;
-        }
-
-        function constrainToBaliseZone(x, y) {
-            let constrainedX = constrain(x, baliseZone.x, baliseZone.x + baliseZone.width);
-            let constrainedY = constrain(y, baliseZone.y, baliseZone.y + baliseZone.height);
-            return {x: constrainedX, y: constrainedY};
         }
 
         function updateCapContinuous() {
@@ -596,6 +631,7 @@
 
         function touchStarted(event) {
             if (isMobile) {
+                // Ne traiter que les touches qui ne sont pas sur des boutons
                 const touchX = event.touches[0].clientX;
                 const touchY = event.touches[0].clientY;
                 
@@ -608,10 +644,8 @@
                     isTouchInElement(touchX, touchY, capMoinsBtn) ||
                     isTouchInElement(touchX, touchY, reponseBtn);
                 
-                if (isOnButton) {
-                    // Laisser l'événement se propager normalement pour les boutons
-                    return true;
-                } else {
+                // Si ce n'est pas sur un bouton, gérer le déplacement
+                if (!isOnButton) {
                     let adjustedTouchX = (touchX - offsetX) / zoomScale;
                     let adjustedTouchY = (touchY - offsetY) / zoomScale;
                     
