@@ -67,7 +67,6 @@
             cursor: pointer;
             width: 180px;
             text-align: center;
-            /* Important pour mobile */
             touch-action: auto;
             -webkit-tap-highlight-color: transparent;
         }
@@ -220,10 +219,9 @@
                     capMoinsPressed = false;
                 }, {passive: false});
                 
-                // SOLUTION ALTERNATIVE pour le bouton réponse
+                // SOLUTION pour le bouton réponse
                 const reponseBtn = document.getElementById('toggleReponse');
                 
-                // Utiliser à la fois click et touchstart pour maximiser la compatibilité
                 reponseBtn.addEventListener('click', handleReponseClick);
                 reponseBtn.addEventListener('touchstart', handleReponseTouch);
                 
@@ -238,16 +236,12 @@
                     e.preventDefault();
                     e.stopPropagation();
                     toggleReponse();
-                    // Simuler un click pour certains navigateurs
-                    this.click();
                     return false;
                 }
                 
                 function toggleReponse() {
                     reponse = !reponse;
                     console.log('Bouton réponse - reponse:', reponse);
-                    // Forcer le redessin
-                    redraw();
                 }
                 
                 document.querySelector('.mobile-controls').style.display = 'flex';
@@ -340,9 +334,11 @@
 
             drawAircraft(NDX);
 
+            // Interface utilisateur - DESSINÉE EN DEHORS DE LA TRANSFORMATION
+            pop(); // Fin de la transformation de zoom/déplacement
+            
             drawInterface();
 
-            pop();
         }
 
         function calculateBaliseZone(NDBX1, NDBY1, NDBX2, NDBY2) {
@@ -540,13 +536,34 @@
         }
 
         function drawInterface() {
-            let infoX = isMobile ? 10 : 5;
-            let infoY = isMobile ? height * 0.65 : 400;
-            let textStep = 15;
+            // Réinitialiser toutes les transformations pour l'interface
+            resetMatrix();
+            
+            let infoX, infoY, textStep;
+
+            if (isMobile) {
+                // Position adaptée pour mobile
+                if (windowWidth > windowHeight) {
+                    // Mode paysage
+                    infoX = 10;
+                    infoY = height * 0.1;
+                } else {
+                    // Mode portrait
+                    infoX = 10;
+                    infoY = height * 0.6;
+                }
+                textStep = 18;
+            } else {
+                // Desktop
+                infoX = 5;
+                infoY = 400;
+                textStep = 15;
+            }
 
             fill(0);
-            textSize(isMobile ? 11 : 12);
+            textSize(isMobile ? 14 : 12);
             
+            // Labels toujours visibles
             text("QDR1 =", infoX + 5, infoY);
             text("QDM1 =", infoX + 5, infoY + textStep);
             text("GT1  =", infoX + 5, infoY + textStep * 2);
@@ -555,33 +572,38 @@
             text("QDM2 =", infoX + 5, infoY + textStep * 5);
             text("GT2  =", infoX + 5, infoY + textStep * 6);
 
+            // Valeurs cachées ou affichées selon l'état
             if (reponse) {
-                text(round(QDR1), infoX + 55, infoY);
-                text(round(QDM1), infoX + 55, infoY + textStep);
-                text(round(GT), infoX + 55, infoY + textStep * 2);
-                text(round(rose), infoX + 55, infoY + textStep * 3);
-                text(round(QDR3), infoX + 55, infoY + textStep * 4);
-                text(round(QDM), infoX + 55, infoY + textStep * 5);
-                text(round(GT1), infoX + 55, infoY + textStep * 6);
+                fill(0, 100, 0); // Vert pour les réponses
+                text(round(QDR1) + "°", infoX + 70, infoY);
+                text(round(QDM1) + "°", infoX + 70, infoY + textStep);
+                text(round(GT) + "°", infoX + 70, infoY + textStep * 2);
+                text(round(rose) + "°", infoX + 70, infoY + textStep * 3);
+                text(round(QDR3) + "°", infoX + 70, infoY + textStep * 4);
+                text(round(QDM) + "°", infoX + 70, infoY + textStep * 5);
+                text(round(GT1) + "°", infoX + 70, infoY + textStep * 6);
             } else {
-                text("---", infoX + 55, infoY);
-                text("---", infoX + 55, infoY + textStep);
-                text("---", infoX + 55, infoY + textStep * 2);
-                text("---", infoX + 55, infoY + textStep * 3);
-                text("---", infoX + 55, infoY + textStep * 4);
-                text("---", infoX + 55, infoY + textStep * 5);
-                text("---", infoX + 55, infoY + textStep * 6);
+                fill(100); // Gris pour les cachés
+                text("---", infoX + 70, infoY);
+                text("---", infoX + 70, infoY + textStep);
+                text("---", infoX + 70, infoY + textStep * 2);
+                text("---", infoX + 70, infoY + textStep * 3);
+                text("---", infoX + 70, infoY + textStep * 4);
+                text("---", infoX + 70, infoY + textStep * 5);
+                text("---", infoX + 70, infoY + textStep * 6);
             }
 
+            // Instructions mobiles
             if (isMobile) {
                 fill(0);
                 textSize(12);
                 textAlign(CENTER);
-                text("Touchez la zone bleue pour déplacer l'avion", width/2, 50);
-                text("Pincez pour zoomer", width/2, 70);
+                text("Touchez la zone bleue pour déplacer l'avion", width/2, 30);
+                text("Pincez pour zoomer", width/2, 50);
                 textAlign(LEFT);
             }
 
+            // Aide desktop
             if (!isMobile) {
                 fill(0);
                 textSize(12);
