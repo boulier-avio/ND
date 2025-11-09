@@ -117,6 +117,7 @@
         
         // Variables pour le contrôle continu du cap
         let rightMousePressed = false;
+        let leftMousePressed = false;
         let lastUpdateTime = 0;
         const CAP_CHANGE_INTERVAL = 16;
 
@@ -131,6 +132,9 @@
         let isDragging = false;
         let lastTouchX, lastTouchY;
         let lastTouchDistance = 0;
+
+        // Variable pour contrôler le déplacement de l'avion
+        let aircraftMoving = false;
 
         function preload() {
             // Chargement des images avec chemins relatifs
@@ -200,11 +204,11 @@
                     e.preventDefault();
                     e.stopPropagation();
                     reponse = !reponse;
-                }, {passive: false});
+                });
                 
                 document.querySelector('.mobile-controls').style.display = 'flex';
                 document.querySelector('.desktop-controls').style.display = 'none';
-                document.querySelector('.contact-info').style.display = 'block';
+                document.querySelector('.contact-info').style.display = 'none'; // Cacher le contact sur mobile
             } else {
                 // Configuration desktop
                 document.getElementById('desktopToggleReponse').addEventListener('click', function(e) {
@@ -226,8 +230,8 @@
             // Mise à jour continue du cap
             updateCapContinuous();
 
-            // Mise à jour de la position de l'avion sur desktop
-            if (!isMobile) {
+            // Mise à jour de la position de l'avion sur desktop avec clic gauche
+            if (!isMobile && leftMousePressed) {
                 updateAircraftPosition();
             }
 
@@ -320,8 +324,8 @@
         }
 
         function updateAircraftPosition() {
-            // Sur desktop, l'avion suit la souris en permanence
-            if (!isMobile) {
+            // Sur desktop, l'avion suit la souris seulement si le clic gauche est maintenu
+            if (!isMobile && leftMousePressed) {
                 mmx = mouseX;
                 mmy = mouseY;
             }
@@ -342,9 +346,6 @@
                     pop();
                     
                     // Flèches avec taille adaptative proportionnelle à la rose
-                  // let flecheWidthDouble = isMobile ? roseSize * 0.06 : 17;
-                   //let flecheWidthSimple = isMobile ? roseSize * 0.07 : 20;
-                    
                     push();
                     translate(NDX, NDY+15);
                     rotate(radians(QDM));  
@@ -453,8 +454,9 @@
             let adjustedMmx = (mmx - offsetX) / zoomScale;
             let adjustedMmy = (mmy - offsetY) / zoomScale;
 
-            // Sur desktop, toujours afficher l'avion qui suit la souris
-            const shouldShowAircraft = (!isMobile) || (isMobile && touches.length > 0);
+            // Sur desktop, afficher l'avion seulement si le clic gauche est maintenu
+            // Sur mobile, afficher l'avion seulement si on touche l'écran (sauf les boutons)
+            const shouldShowAircraft = (!isMobile && leftMousePressed) || (isMobile && aircraftMoving);
             
             if (shouldShowAircraft) {
                 if (!isMobile) noCursor();
@@ -535,24 +537,35 @@
             if (!isMobile) {
                 fill(0);
                 textSize(12);
-                text("Clic droit maintenu: changer cap", infoX, infoY + textStep * 8);
-                text("Touche 1 ou bouton: afficher/cacher valeurs", infoX, infoY + textStep * 9);
+                text("Clic gauche maintenu: déplacer avion", infoX, infoY + textStep * 8);
+                text("Clic droit maintenu: changer cap", infoX, infoY + textStep * 9);
+                text("Touche 1 ou bouton: afficher/cacher valeurs", infoX, infoY + textStep * 10);
             }
         }
 
         function mousePressed() {
-            if (!isMobile && mouseButton === RIGHT) {
-                rightMousePressed = true;
-                lastUpdateTime = millis();
-                return false;
+            if (!isMobile) {
+                if (mouseButton === RIGHT) {
+                    rightMousePressed = true;
+                    lastUpdateTime = millis();
+                    return false;
+                } else if (mouseButton === LEFT) {
+                    leftMousePressed = true;
+                    return false;
+                }
             }
             return false;
         }
 
         function mouseReleased() {
-            if (!isMobile && mouseButton === RIGHT) {
-                rightMousePressed = false;
-                return false;
+            if (!isMobile) {
+                if (mouseButton === RIGHT) {
+                    rightMousePressed = false;
+                    return false;
+                } else if (mouseButton === LEFT) {
+                    leftMousePressed = false;
+                    return false;
+                }
             }
             return false;
         }
@@ -563,50 +576,88 @@
             }
         }
 
-        function touchStarted() {
-            if (isMobile && touches.length === 1) {
-                // Déplacement de l'avion avec un seul doigt
-                mmx = touches[0].x;
-                mmy = touches[0].y;
-                isDragging = true;
-                lastTouchX = touches[0].x;
-                lastTouchY = touches[0].y;
-            } else if (isMobile && touches.length === 2) {
-                // Zoom avec deux doigts
-                lastTouchDistance = dist(
-                    touches[0].x, touches[0].y,
-                    touches[1].x, touches[1].y
-                );
+        function touchStarted(event) {
+            if (isMobile) {
+                // Vérifier si le toucher est sur un bouton
+                const touchX = event.touches[0].clientX;
+                const touchY = event.touches[0].clientY;
+                
+                // Obtenir les éléments de contrôle
+                const capPlusBtn = document.getElementById('capPlus');
+                const capMoinsBtn = document.getElementById('capMoins');
+                const reponseBtn = document.getElementById('toggleReponse');
+                
+                // Vérifier si le toucher est sur un bouton
+                const isOnButton = 
+                    isTouchInElement(touchX, touchY, capPlusBtn) ||
+                    isTouchInElement(touchX, touchY, capMoinsBtn) ||
+                    isTouchInElement(touchX, touchY, reponseBtn);
+                
+                // Si le toucher n'est pas sur un bouton, déplacer l'avion
+                if (!isOnButton) {
+                    aircraftMoving = true;
+                    mmx = touchX;
+                    mmy = touchY;
+                    
+                    if (touches.length === 1) {
+                        // Déplacement de l'avion avec un seul doigt
+                        isDragging = true;
+                        lastTouchX = touchX;
+                        lastTouchY = touchY;
+                    } else if (touches.length === 2) {
+                        // Zoom avec deux doigts
+                        lastTouchDistance = dist(
+                            touches[0].x, touches[0].y,
+                            touches[1].x, touches[1].y
+                        );
+                    }
+                }
             }
             return false;
         }
 
-        function touchMoved() {
-            if (isMobile && touches.length === 1 && isDragging) {
-                // Déplacement de l'avion
-                mmx = touches[0].x;
-                mmy = touches[0].y;
-            } else if (isMobile && touches.length === 2) {
-                // Zoom
-                let currentDistance = dist(
-                    touches[0].x, touches[0].y,
-                    touches[1].x, touches[1].y
-                );
-                
-                let zoomFactor = currentDistance / lastTouchDistance;
-                zoomScale *= zoomFactor;
-                zoomScale = constrain(zoomScale, 0.5, 3.0);
-                
-                lastTouchDistance = currentDistance;
+        function touchMoved(event) {
+            if (isMobile && aircraftMoving) {
+                if (touches.length === 1 && isDragging) {
+                    // Déplacement de l'avion
+                    mmx = touches[0].x;
+                    mmy = touches[0].y;
+                } else if (touches.length === 2) {
+                    // Zoom
+                    let currentDistance = dist(
+                        touches[0].x, touches[0].y,
+                        touches[1].x, touches[1].y
+                    );
+                    
+                    let zoomFactor = currentDistance / lastTouchDistance;
+                    zoomScale *= zoomFactor;
+                    zoomScale = constrain(zoomScale, 0.5, 3.0);
+                    
+                    lastTouchDistance = currentDistance;
+                }
             }
             return false;
         }
 
         function touchEnded() {
-            if (isMobile && touches.length === 0) {
-                isDragging = false;
+            if (isMobile) {
+                aircraftMoving = false;
+                if (touches.length === 0) {
+                    isDragging = false;
+                }
             }
             return false;
+        }
+
+        // Fonction utilitaire pour vérifier si un toucher est dans un élément
+        function isTouchInElement(touchX, touchY, element) {
+            const rect = element.getBoundingClientRect();
+            return (
+                touchX >= rect.left &&
+                touchX <= rect.right &&
+                touchY >= rect.top &&
+                touchY <= rect.bottom
+            );
         }
 
         function windowResized() {
