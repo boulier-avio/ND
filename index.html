@@ -15,6 +15,7 @@
             -webkit-user-select: none;
             user-select: none;
             background: white;
+            cursor: default; /* Curseur par défaut */
         }
         .mobile-controls {
             position: fixed;
@@ -35,6 +36,7 @@
             font-size: 24px;
             margin: 5px;
             touch-action: manipulation;
+            cursor: pointer; /* Curseur pointer sur les boutons */
         }
         .cap-display {
             color: black;
@@ -169,6 +171,7 @@
             
             let canvas = createCanvas(windowWidth, windowHeight);
             canvas.style('display', 'block');
+            canvas.style('cursor', 'default'); // Curseur par défaut sur le canvas
             
             // Position initiale de l'avion au centre de la zone des balises
             baliseLH = createVector(0, -10);
@@ -207,10 +210,8 @@
                     capMoinsPressed = false;
                 }, {passive: false});
                 
-                // CORRECTION : Utiliser click au lieu de touch pour le bouton réponse
+                // CORRECTION : Utiliser un événement simple sans empêcher la propagation
                 document.getElementById('toggleReponse').addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
                     reponse = !reponse;
                     console.log('Bouton réponse mobile cliqué, reponse =', reponse);
                 });
@@ -534,8 +535,7 @@
             let adjustedMmx = (mmx - offsetX) / zoomScale;
             let adjustedMmy = (mmy - offsetY) / zoomScale;
 
-            // Afficher l'avion en permanence maintenant
-            if (!isMobile) noCursor();
+            // Afficher l'avion en permanence
             push();
             translate(adjustedMmx, adjustedMmy);
             rotate(radians(rose));
@@ -671,9 +671,16 @@
                     isTouchInElement(touchX, touchY, capMoinsBtn) ||
                     isTouchInElement(touchX, touchY, reponseBtn);
                 
-                // Si le toucher n'est pas sur un bouton, vérifier si c'est dans la zone bleue
-                if (!isOnButton) {
-                    // Ajuster les coordonnées pour le zoom
+                if (isOnButton) {
+                    // Si c'est sur le bouton réponse, on laisse l'événement se propager
+                    if (isTouchInElement(touchX, touchY, reponseBtn)) {
+                        // Ne rien faire de spécial, laisser le click naturel se produire
+                        return true;
+                    }
+                    // Pour les autres boutons, on gère normalement
+                    return false;
+                } else {
+                    // Si le toucher n'est pas sur un bouton, vérifier si c'est dans la zone bleue
                     let adjustedTouchX = (touchX - offsetX) / zoomScale;
                     let adjustedTouchY = (touchY - offsetY) / zoomScale;
                     
@@ -694,6 +701,7 @@
                             );
                         }
                     }
+                    return false;
                 }
             }
             return false;
