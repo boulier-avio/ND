@@ -108,7 +108,7 @@
     </div>
 
     <script>
-        let imgNDcadre, imgNDmaquette, imgNDrose;
+        let imgNDcadre, imgNDmaquette, imgNDrose, imgtraicap;
         let flecheNDDouble, flecheNDSimple, imgNDB, imgPlane;
         let rose = 0;
         let QDR1, QDR3, QDM, QDM1, GT, GT1;
@@ -157,6 +157,7 @@
             flecheNDSimple = loadImage('NDSimple.png');
             imgNDB = loadImage('NDB.png');
             imgPlane = loadImage('plane.png');
+            imgtraicap = loadImage('traicap.png');
             
             imagesLoaded = true;
         }
@@ -261,7 +262,7 @@
         function draw() {
             background(255);
             
-           // document.getElementById('capValue').textContent = round(rose);
+            document.getElementById('capValue').textContent = round(rose);
 
             updateCapContinuous();
 
@@ -310,25 +311,25 @@
                 mmy = centerY * zoomScale + offsetY;
             }
 
-            let cadreSize, roseSize, flecheLength;
+            let cadreSize, roseSize, traicapSize;
             
             if (isMobile) {
                 if (windowWidth > windowHeight) {
                     cadreSize = min(width, height) * 0.3;
                     roseSize = min(width, height) * 0.22;
-                    flecheLength = roseSize * 0.85;
+                    traicapSize = min(width, height) * 0.3;
                 } else {
                     cadreSize = min(width, height) * 0.35;
                     roseSize = min(width, height) * 0.25;
-                    flecheLength = roseSize * 0.85;
+                    traicapSize = min(width, height) * 0.35;
                 }
             } else {
                 cadreSize = 368;
                 roseSize = 271;
-                flecheLength = 231;
+                traicapSize = 368;
             }
 
-            drawMainElements(NDX, NDY, cadreSize, roseSize, flecheLength, NDBX1, NDBY1, NDBX2, NDBY2);
+            drawMainElements(NDX, NDY, cadreSize, roseSize, traicapSize, NDBX1, NDBY1, NDBX2, NDBY2);
 
             calculateNavigation(NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2);
 
@@ -406,7 +407,7 @@
             }
         }
 
-        function drawMainElements(NDX, NDY, cadreSize, roseSize, flecheLength, NDBX1, NDBY1, NDBX2, NDBY2) {
+        function drawMainElements(NDX, NDY, cadreSize, roseSize, traicapSize, NDBX1, NDBY1, NDBX2, NDBY2) {
             if (imagesLoaded) {
                 try {
                     image(imgNDcadre, NDX, NDY, cadreSize, cadreSize);
@@ -416,6 +417,13 @@
                     translate(NDX, NDY);
                     rotate(radians(-rose));
                     image(imgNDrose, 0, 0, roseSize, roseSize); 
+                    pop();
+                    
+                    // Dessiner l'image traicap.png pour indiquer le cap
+                    push();
+                    translate(NDX, NDY);
+                    rotate(radians(rose));
+                    image(imgtraicap, 0, 0, traicapSize, traicapSize);
                     pop();
                     
                     push();
@@ -439,13 +447,6 @@
             } else {
                 drawFallbackGraphics(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2);
             }
-
-            stroke(233, 255, 3);
-            strokeWeight(2);
-            let roseRadius = roseSize / 2;
-            let markerLength = isMobile ? roseSize * 0.08 : 20;
-            line(NDX, NDY - roseRadius + markerLength/2, NDX, NDY - roseRadius + markerLength); 
-            noStroke();
         }
 
         function drawFallbackGraphics(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2) {
