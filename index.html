@@ -410,6 +410,9 @@
         function drawMainElements(NDX, NDY, cadreSize, roseSize, traicapSize, NDBX1, NDBY1, NDBX2, NDBY2) {
             if (imagesLoaded) {
                 try {
+                    // Dessiner l'image traicap.png fixe (ne bouge pas avec le cap)
+                    image(imgtraicap, NDX, NDY, traicapSize, traicapSize);
+                    
                     image(imgNDcadre, NDX, NDY, cadreSize, cadreSize);
                     image(imgNDmaquette, NDX, NDY, cadreSize/10, cadreSize/10);
 
@@ -418,13 +421,6 @@
                     rotate(radians(-rose));
                     image(imgNDrose, 0, 0, roseSize, roseSize); 
                     pop();
-                    
-                    // Dessiner l'image traicap.png pour indiquer le cap
-                   // push();
-                 //   translate(NDX, NDY);
-                  //  rotate(radians(rose));
-                    image(imgtraicap, 0, 0, traicapSize, traicapSize);
-                  //  pop();
                     
                     push();
                     translate(NDX, NDY);
