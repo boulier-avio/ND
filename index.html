@@ -93,7 +93,7 @@
 </head>
 <body>
     <div class="mobile-controls">
-        <div class="cap-display">CAP: <span id="capValue">0</span>°</div>
+     <!-- <div class="cap-display">CAP: <span id="capValue">0</span>°</div>-->
         <button class="control-btn" id="capPlus">+</button>
         <button class="control-btn" id="capMoins">-</button>
         <button class="reponse-btn" id="toggleReponse">Afficher/Cacher Réponses</button>
@@ -421,7 +421,7 @@
                     image(imgNDrose, 0, 0, roseSize, roseSize); 
                     pop();
                    // Dessiner l'image traicap.png fixe (ne bouge pas avec le cap)
-                    image(imgtraicap, NDX, NDY, traicapSize, traicapSize); 
+                    image(imgtraicap, NDX, NDY, cadreSize, cadreSize); 
                     push();
                     translate(NDX, NDY);
                     rotate(radians(QDM));  
