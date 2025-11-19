@@ -38,15 +38,6 @@
             touch-action: manipulation;
             cursor: pointer;
         }
-       .cap-display {
-            color: black;
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            background: rgba(255,255,255,0.8);
-            padding: 5px 10px;
-            border-radius: 10px;
-        } 
         .desktop-controls {
             position: fixed;
             bottom: 80px;
@@ -93,7 +84,6 @@
 </head>
 <body>
     <div class="mobile-controls">
-     <div class="cap-display">CAP: <span id="capValue">0</span>°</div>
         <button class="control-btn" id="capPlus">+</button>
         <button class="control-btn" id="capMoins">-</button>
         <button class="reponse-btn" id="toggleReponse">Afficher/Cacher Réponses</button>
@@ -262,8 +252,6 @@
         function draw() {
             background(255);
             
-            document.getElementById('capValue').textContent = round(rose);
-
             updateCapContinuous();
 
             if (!isMobile && leftMousePressed) {
