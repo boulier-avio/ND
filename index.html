@@ -19,7 +19,8 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            touch-action: manipulation;
+            touch-action: pan-y; /* Permet le défilement vertical */
+            overflow-y: auto; /* Active le défilement vertical */
             overflow-x: hidden;
         }
         h1 {
@@ -148,10 +149,6 @@
             margin-top: 30px;
         }
         @media (max-width: 900px) {
-            body {
-                overflow-y: auto;
-                height: auto;
-            }
             .jeu-reponse-row {
                 flex-direction: column;
                 align-items: center;
@@ -481,18 +478,32 @@
             canvas.style('display', 'block');
             canvas.style('cursor', 'default');
             
-            // Empêcher les événements de touch sur le canvas d'interférer avec les boutons
+            // Gestion des événements tactiles uniquement sur le canvas
             canvas.elt.addEventListener('touchstart', function(e) {
-                if (e.target === this) {
-                    e.preventDefault();
+                if (isInBaliseZone((e.touches[0].clientX - offsetX) / zoomScale, 
+                                  (e.touches[0].clientY - offsetY) / zoomScale)) {
+                    e.preventDefault(); // Seulement dans la zone de jeu
                 }
             }, { passive: false });
             
             canvas.elt.addEventListener('touchmove', function(e) {
-                if (e.target === this) {
-                    e.preventDefault();
+                if (aircraftMoving) {
+                    e.preventDefault(); // Seulement quand on déplace l'avion
                 }
             }, { passive: false });
+            
+            // Gestes de zoom uniquement sur le canvas
+            canvas.elt.addEventListener('gesturestart', function(e) {
+                e.preventDefault();
+            });
+            
+            canvas.elt.addEventListener('gesturechange', function(e) {
+                e.preventDefault();
+            });
+            
+            canvas.elt.addEventListener('gestureend', function(e) {
+                e.preventDefault();
+            });
             
             baliseLH = createVector(0, -10);
             baliseRH = createVector(0, -10);
@@ -951,123 +962,4 @@
                     mmx = touchX;
                     mmy = touchY;
                     
-                    if (touches.length === 1) {
-                        isDragging = true;
-                        lastTouchX = touchX;
-                        lastTouchY = touchY;
-                    } else if (touches.length === 2) {
-                        lastTouchDistance = dist(
-                            touches[0].x, touches[0].y,
-                            touches[1].x, touches[1].y
-                        );
-                    }
-                }
-                return false;
-            }
-            return false;
-        }
-
-        function touchMoved(event) {
-            if (isMobile && aircraftMoving) {
-                if (touches.length === 1 && isDragging) {
-                    let targetX = touches[0].x;
-                    let targetY = touches[0].y;
-                    
-                    let adjustedTargetX = (targetX - offsetX) / zoomScale;
-                    let adjustedTargetY = (targetY - offsetY) / zoomScale;
-                    
-                    if (isInBaliseZone(adjustedTargetX, adjustedTargetY)) {
-                        mmx = targetX;
-                        mmy = targetY;
-                    }
-                } else if (touches.length === 2) {
-                    let currentDistance = dist(
-                        touches[0].x, touches[0].y,
-                        touches[1].x, touches[1].y
-                    );
-                    
-                    let zoomFactor = currentDistance / lastTouchDistance;
-                    zoomScale *= zoomFactor;
-                    zoomScale = constrain(zoomScale, 0.5, 3.0);
-                    
-                    lastTouchDistance = currentDistance;
-                }
-            }
-            return false;
-        }
-
-        function touchEnded() {
-            if (isMobile) {
-                aircraftMoving = false;
-                if (touches.length === 0) {
-                    isDragging = false;
-                }
-            }
-            return false;
-        }
-
-        function isTouchInElement(touchX, touchY, element) {
-            if (!element) return false;
-            const rect = element.getBoundingClientRect();
-            return (
-                touchX >= rect.left &&
-                touchX <= rect.right &&
-                touchY >= rect.top &&
-                touchY <= rect.bottom
-            );
-        }
-
-        function windowResized() {
-            // Redimensionnement adaptatif
-            if (isMobile) {
-                resizeCanvas(windowWidth * 0.95, windowHeight * 0.5);
-            } else {
-                resizeCanvas(1000, 500);
-            }
-        }
-
-        // Fonctions pour les boutons de contrôle
-        function randomPosition() {
-            let centerX = baliseZone.x + baliseZone.width / 2;
-            let centerY = baliseZone.y + baliseZone.height / 2;
-            
-            let randomX = random(baliseZone.x, baliseZone.x + baliseZone.width);
-            let randomY = random(baliseZone.y, baliseZone.y + baliseZone.height);
-            
-            mmx = randomX * zoomScale + offsetX;
-            mmy = randomY * zoomScale + offsetY;
-        }
-
-        function randomCap() {
-            rose = random(0, 359);
-        }
-
-        function randomBoth() {
-            randomPosition();
-            randomCap();
-        }
-
-        function toggleReponse() {
-            reponse = !reponse;
-            updateAnswers();
-        }
-
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-            return false;
-        });
-
-        document.addEventListener('gesturestart', function(e) {
-            e.preventDefault();
-        });
-
-        document.addEventListener('gesturechange', function(e) {
-            e.preventDefault();
-        });
-
-        document.addEventListener('gestureend', function(e) {
-            e.preventDefault();
-        });
-    </script>
-</body>
-</html>
+                   
