@@ -170,6 +170,28 @@
             align-items: flex-start;
             margin-top: 30px;
         }
+        .position-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .cap-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
         @media (max-width: 900px) {
             .jeu-reponse-row {
                 flex-direction: column;
@@ -204,6 +226,10 @@
             .cap-controls {
                 justify-content: center;
                 width: 100%;
+            }
+            .position-info, .cap-indicator {
+                font-size: 0.8em;
+                padding: 6px 8px;
             }
         }
         .modal {
@@ -319,6 +345,8 @@
         <div class="jeu-reponse-row">
             <div id="canvasContainer">
                 <div class="loading">Chargement des images...</div>
+                <div class="position-info" id="positionInfo">Position: (0, 0)</div>
+                <div class="cap-indicator" id="capIndicator">Cap: 0°</div>
             </div>
             <div id="reponsesBox">QDR1 = ?<br>QDM1 = ?<br>GT1 = ?<br>CAP = ?<br>QDR2 = ?<br>QDM2 = ?<br>GT2 = ?</div>
         </div>
@@ -402,6 +430,9 @@
             padding: 100
         };
 
+        // Variables pour les indicateurs de position et cap
+        let positionInfo, capIndicator;
+
         function preload() {
             // Chargement des images avec gestion d'erreur
             imgNDcadre = loadImage('NDcadre.png', imageLoaded, imageLoadError);
@@ -453,6 +484,10 @@
             canvas.style('display', 'block');
             canvas.style('cursor', 'default');
             
+            // Initialiser les éléments d'interface
+            positionInfo = document.getElementById('positionInfo');
+            capIndicator = document.getElementById('capIndicator');
+            
             // Gestion des événements tactiles
             canvas.elt.addEventListener('touchstart', function(e) {
                 if (isInBaliseZone((e.touches[0].clientX - offsetX) / zoomScale, 
@@ -492,6 +527,9 @@
             let centerY = (min(183, 383) + max(183, 383)) / 2;
             mmx = centerX * zoomScale + offsetX;
             mmy = centerY * zoomScale + offsetY;
+            
+            // Mettre à jour les indicateurs
+            updateIndicators();
         }
 
         function setupButtonEvents() {
@@ -504,6 +542,7 @@
             if (capPlusBtn) {
                 capPlusBtn.addEventListener('click', function() {
                     rose = (rose + 5) % 360;
+                    updateIndicators();
                 });
                 capPlusBtn.addEventListener('touchstart', function(e) {
                     e.preventDefault();
@@ -518,6 +557,7 @@
             if (capMoinsBtn) {
                 capMoinsBtn.addEventListener('click', function() {
                     rose = (rose - 5 + 360) % 360;
+                    updateIndicators();
                 });
                 capMoinsBtn.addEventListener('touchstart', function(e) {
                     e.preventDefault();
@@ -628,6 +668,22 @@
 
             pop();
             updateAnswers();
+            updateIndicators();
+        }
+
+        function updateIndicators() {
+            if (positionInfo && capIndicator) {
+                // Calculer la position relative dans la zone
+                let adjustedMmx = (mmx - offsetX) / zoomScale;
+                let adjustedMmy = (mmy - offsetY) / zoomScale;
+                
+                // Normaliser les coordonnées pour un affichage plus lisible
+                let posX = Math.round(adjustedMmx - baliseZone.x);
+                let posY = Math.round(adjustedMmy - baliseZone.y);
+                
+                positionInfo.textContent = `Position: (${posX}, ${posY})`;
+                capIndicator.textContent = `Cap: ${rose}°`;
+            }
         }
 
         function drawBaliseNumbers(NDBX1, NDBY1, NDBX2, NDBY2) {
@@ -655,9 +711,10 @@
         }
 
         function drawBaliseZone() {
+            // Fond semi-transparent pour la zone de déplacement
+            fill(173, 216, 230, 50); // Bleu clair avec transparence
             stroke(0, 100, 255, 150);
             strokeWeight(3);
-            noFill();
             rect(baliseZone.x + baliseZone.width/2, baliseZone.y + baliseZone.height/2, 
                  baliseZone.width, baliseZone.height);
             noStroke();
@@ -683,10 +740,17 @@
             if (currentTime - lastUpdateTime > CAP_CHANGE_INTERVAL) {
                 if (!isMobile && rightMousePressed) {
                     rose = (rose + 1) % 360;
+                    updateIndicators();
                 }
                 if (isMobile) {
-                    if (capPlusPressed) rose = (rose + 2) % 360;
-                    if (capMoinsPressed) rose = (rose - 2 + 360) % 360;
+                    if (capPlusPressed) {
+                        rose = (rose + 2) % 360;
+                        updateIndicators();
+                    }
+                    if (capMoinsPressed) {
+                        rose = (rose - 2 + 360) % 360;
+                        updateIndicators();
+                    }
                 }
                 lastUpdateTime = currentTime;
             }
@@ -703,6 +767,7 @@
                 if (isInBaliseZone(adjustedTargetX, adjustedTargetY)) {
                     mmx = targetX;
                     mmy = targetY;
+                    updateIndicators();
                 }
             }
         }
@@ -906,6 +971,7 @@
                     aircraftMoving = true;
                     mmx = touchX;
                     mmy = touchY;
+                    updateIndicators();
                     
                     if (touches.length === 1) {
                         isDragging = true;
@@ -935,6 +1001,7 @@
                     if (isInBaliseZone(adjustedTargetX, adjustedTargetY)) {
                         mmx = targetX;
                         mmy = targetY;
+                        updateIndicators();
                     }
                 } else if (touches.length === 2) {
                     let currentDistance = dist(
@@ -979,10 +1046,12 @@
             
             mmx = randomX * zoomScale + offsetX;
             mmy = randomY * zoomScale + offsetY;
+            updateIndicators();
         }
 
         function randomCap() {
             rose = random(0, 359);
+            updateIndicators();
         }
 
         function randomBoth() {
