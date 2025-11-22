@@ -128,7 +128,7 @@
             justify-content: center;
             align-items: center;
             min-width: 200px;
-            max-width: 800px;
+            max-width: 1000px; /* Augmenté la largeur maximale */
             position: relative;
             height: 500px;
         }
@@ -168,6 +168,7 @@
             }
             #canvasContainer {
                 height: 400px;
+                max-width: 95vw; /* Adaptation mobile */
             }
         }
         /* Aide modale */
@@ -296,8 +297,8 @@
         
         <div class="consigne">
             <h3>📋 Consigne :</h3>
-            <p><strong>Détermine le cap de l'avion puis pour chacune des balise trouve le gisement ainsi que les relèvements QDR et QDM.</strong></p>
-            <p>Déplacez l'avion dans la zone bleue et modifiez son cap pour observer les changements dans sur le ND.</p>
+            <p><strong>Détermine la position de l'avion, son cap, le gisement ainsi que les relèvements QDR et QDM à partir de l'instrument.</strong></p>
+            <p>Déplacez l'avion dans la zone bleue et modifiez son cap pour observer les changements dans les mesures.</p>
             
             <div class="astuce">
                 <strong>Astuce :</strong><br>
@@ -309,9 +310,8 @@
         </div>
 
         <div class="controls">
-            <button id="randomPositionBtn">Position Aléatoire (1)</button>
-            <button id="randomCapBtn">Cap Aléatoire (2)</button>
-            <button id="randomBothBtn">Les deux (3)</button>
+            <!-- Supprimé les boutons 1 et 2, renommé le bouton 3 -->
+            <button id="randomBothBtn">Position/Cap Aléatoire (3)</button>
             <button id="toggleReponseBtn">Afficher/Masquer Réponse</button>
         </div>
         
@@ -357,10 +357,8 @@
                 <button class="closeBtn" aria-label="Fermer la fenêtre d'aide">&times;</button>
                 <h2 style="font-size:1.1em;margin-top:0;">À quoi servent les boutons&nbsp;?</h2>
                 <ul style="padding-left:16px;font-size:1em;line-height:1.5;">
-                    <li><strong>Position Aléatoire (1)&nbsp;:</strong> Déplace l'avion aléatoirement dans la zone de balises.</li>
-                    <li><strong>Cap Aléatoire (2)&nbsp;:</strong> Change le cap (direction) de l'avion sans modifier sa position.</li>
-                    <li><strong>Les deux (3)&nbsp;:</strong> Change à la fois la position et le cap de l'avion.</li>
-                    <li>Sur ordinateur cela fonctionne avec les touches 1, 2 et 3</li>
+                    <li><strong>Position/Cap Aléatoire (3)&nbsp;:</strong> Change à la fois la position et le cap de l'avion.</li>
+                    <li>Sur ordinateur cela fonctionne avec la touche 3</li>
                     <li><strong>Afficher/Masquer Réponse&nbsp;:</strong> Montre ou cache les valeurs réelles (GT, QDM, QDR, Cap).</li>
                 </ul>
             </div>
@@ -436,7 +434,8 @@
                       ('ontouchstart' in window) || 
                       (navigator.maxTouchPoints > 0);
             
-            let canvas = createCanvas(800, 500);
+            // Canvas plus large pour éviter le débordement
+            let canvas = createCanvas(1000, 500); // Largeur augmentée à 1000px
             canvas.parent('canvasContainer');
             canvas.style('display', 'block');
             canvas.style('cursor', 'default');
@@ -513,21 +512,9 @@
         }
 
         function setupButtonEvents() {
-            // Boutons de contrôle principaux
-            const randomPositionBtn = document.getElementById('randomPositionBtn');
-            const randomCapBtn = document.getElementById('randomCapBtn');
+            // Boutons de contrôle principaux - seulement le bouton "Position/Cap Aléatoire"
             const randomBothBtn = document.getElementById('randomBothBtn');
             const toggleReponseBtn = document.getElementById('toggleReponseBtn');
-            
-            if (randomPositionBtn) {
-                randomPositionBtn.addEventListener('click', randomPosition);
-                randomPositionBtn.addEventListener('touchend', function(e) {e.preventDefault(); randomPosition();});
-            }
-            
-            if (randomCapBtn) {
-                randomCapBtn.addEventListener('click', randomCap);
-                randomCapBtn.addEventListener('touchend', function(e) {e.preventDefault(); randomCap();});
-            }
             
             if (randomBothBtn) {
                 randomBothBtn.addEventListener('click', randomBoth);
@@ -586,12 +573,12 @@
 
             let NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2;
             
-            // Positionnement des éléments
-            NDX = 183;
+            // Positionnement des éléments avec plus d'espace
+            NDX = 200; // Décalé vers la droite pour plus d'espace
             NDY = 183;
-            NDBX1 = 553;
+            NDBX1 = 600; // Décalé vers la droite
             NDBY1 = 183;
-            NDBX2 = 753;
+            NDBX2 = 850; // Décalé vers la droite
             NDBY2 = 383;
 
             calculateBaliseZone(NDBX1, NDBY1, NDBX2, NDBY2);
@@ -859,11 +846,8 @@
         }
 
         function keyPressed() {
-            if (key === '1') {
-                randomPosition();
-            } else if (key === '2') {
-                randomCap();
-            } else if (key === '3') {
+            // Seulement la touche 3 fonctionne maintenant
+            if (key === '3') {
                 randomBoth();
             }
         }
@@ -959,7 +943,8 @@
         }
 
         function windowResized() {
-            resizeCanvas(800, 500);
+            // Canvas plus large
+            resizeCanvas(1000, 500);
         }
 
         // Fonctions pour les boutons de contrôle
