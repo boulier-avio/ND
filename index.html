@@ -112,6 +112,26 @@
         button:hover, button:active {
             background-color: #45a049;
         }
+        .cap-controls {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        .cap-btn {
+            width: 50px;
+            height: 50px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .cap-btn:hover {
+            background-color: #1976D2;
+        }
         .jeu-reponse-row {
             display: flex;
             flex-direction: row;
@@ -181,6 +201,10 @@
                 max-width: 95vw;
                 width: 95vw;
             }
+            .cap-controls {
+                justify-content: center;
+                width: 100%;
+            }
         }
         .modal {
             display: none;
@@ -233,50 +257,6 @@
             flex-wrap: wrap;
             margin-top: 10px;
         }
-        .mobile-controls {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .control-btn {
-            width: 60px;
-            height: 60px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            font-size: 24px;
-            margin: 5px;
-            touch-action: manipulation;
-            cursor: pointer;
-        }
-        .desktop-controls {
-            position: absolute;
-            bottom: 80px;
-            left: 20px;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .reponse-btn {
-            background: rgba(0,0,0,0.7);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 10px 15px;
-            margin: 5px;
-            font-size: 14px;
-            cursor: pointer;
-            width: 180px;
-            text-align: center;
-            touch-action: auto;
-            -webkit-tap-highlight-color: transparent;
-        }
         .contact-info {
             position: fixed;
             bottom: 20px;
@@ -328,6 +308,10 @@
         </div>
 
         <div class="controls">
+            <div class="cap-controls">
+                <button class="cap-btn" id="capMoins">-</button>
+                <button class="cap-btn" id="capPlus">+</button>
+            </div>
             <button id="randomBothBtn">Position/Cap Aléatoire (3)</button>
             <button id="toggleReponseBtn">Afficher/Masquer Réponse</button>
         </div>
@@ -335,11 +319,6 @@
         <div class="jeu-reponse-row">
             <div id="canvasContainer">
                 <div class="loading">Chargement des images...</div>
-                <div id="mobileControls" class="mobile-controls hidden">
-                    <button class="control-btn" id="capPlus">+</button>
-                    <button class="control-btn" id="capMoins">-</button>
-                </div>
-                <div id="desktopControls" class="desktop-controls hidden"></div>
             </div>
             <div id="reponsesBox">QDR1 = ?<br>QDM1 = ?<br>GT1 = ?<br>CAP = ?<br>QDR2 = ?<br>QDM2 = ?<br>GT2 = ?</div>
         </div>
@@ -367,9 +346,9 @@
                 <button class="closeBtn">&times;</button>
                 <h2>À quoi servent les boutons ?</h2>
                 <ul>
-                    <li><strong>Position/Cap Aléatoire (3) :</strong> Change à la fois la position et le cap de l'avion.</li>
-                    <li>Sur ordinateur cela fonctionne avec la touche 3</li>
-                    <li><strong>Afficher/Masquer Réponse :</strong> Montre ou cache les valeurs réelles.</li>
+                    <li><strong>Boutons + et - :</strong> Modifient le cap de l'avion</li>
+                    <li><strong>Position/Cap Aléatoire (3) :</strong> Change à la fois la position et le cap de l'avion</li>
+                    <li><strong>Afficher/Masquer Réponse :</strong> Montre ou cache les valeurs réelles</li>
                 </ul>
             </div>
         </div>
@@ -507,7 +486,6 @@
             textAlign(CENTER, CENTER);
             
             setupButtonEvents();
-            setupControls();
             
             // Position initiale de l'avion
             let centerX = (min(600, 850) + max(600, 850)) / 2;
@@ -516,48 +494,40 @@
             mmy = centerY * zoomScale + offsetY;
         }
 
-        function setupControls() {
-            const mobileControls = document.getElementById('mobileControls');
-            const desktopControls = document.getElementById('desktopControls');
-            const capPlusBtn = document.getElementById('capPlus');
-            const capMoinsBtn = document.getElementById('capMoins');
-
-            if (isMobile) {
-                if (mobileControls) mobileControls.classList.remove('hidden');
-                if (desktopControls) desktopControls.classList.add('hidden');
-                
-                if (capPlusBtn) {
-                    capPlusBtn.addEventListener('touchstart', function(e) {
-                        e.preventDefault();
-                        capPlusPressed = true;
-                    }, {passive: false});
-                    
-                    capPlusBtn.addEventListener('touchend', function(e) {
-                        e.preventDefault();
-                        capPlusPressed = false;
-                    }, {passive: false});
-                }
-                
-                if (capMoinsBtn) {
-                    capMoinsBtn.addEventListener('touchstart', function(e) {
-                        e.preventDefault();
-                        capMoinsPressed = true;
-                    }, {passive: false});
-                    
-                    capMoinsBtn.addEventListener('touchend', function(e) {
-                        e.preventDefault();
-                        capMoinsPressed = false;
-                    }, {passive: false});
-                }
-            } else {
-                if (mobileControls) mobileControls.classList.add('hidden');
-                if (desktopControls) desktopControls.classList.remove('hidden');
-            }
-        }
-
         function setupButtonEvents() {
             const randomBothBtn = document.getElementById('randomBothBtn');
             const toggleReponseBtn = document.getElementById('toggleReponseBtn');
+            const capPlusBtn = document.getElementById('capPlus');
+            const capMoinsBtn = document.getElementById('capMoins');
+            
+            // Boutons de contrôle du cap
+            if (capPlusBtn) {
+                capPlusBtn.addEventListener('click', function() {
+                    rose = (rose + 5) % 360;
+                });
+                capPlusBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    capPlusPressed = true;
+                }, {passive: false});
+                capPlusBtn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    capPlusPressed = false;
+                }, {passive: false});
+            }
+            
+            if (capMoinsBtn) {
+                capMoinsBtn.addEventListener('click', function() {
+                    rose = (rose - 5 + 360) % 360;
+                });
+                capMoinsBtn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    capMoinsPressed = true;
+                }, {passive: false});
+                capMoinsBtn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    capMoinsPressed = false;
+                }, {passive: false});
+            }
             
             if (randomBothBtn) {
                 randomBothBtn.addEventListener('click', randomBoth);
@@ -661,7 +631,8 @@
         }
 
         function drawBaliseNumbers(NDBX1, NDBY1, NDBX2, NDBY2) {
-            fill(255);
+            // Numéros en ROUGE sur les balises
+            fill(255, 0, 0); // Rouge
             textSize(isMobile ? 16 : 20);
             textAlign(CENTER, CENTER);
             textStyle(BOLD);
