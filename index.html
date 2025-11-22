@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BOULIER gisement ADF sur ND</title>
+    <title>ADF sur ND</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js"></script>
     <style>
         * {
@@ -128,7 +128,7 @@
             justify-content: center;
             align-items: center;
             min-width: 200px;
-            max-width: 1000px; /* Augmenté la largeur maximale */
+            max-width: 1000px;
             position: relative;
             height: 500px;
         }
@@ -168,7 +168,15 @@
             }
             #canvasContainer {
                 height: 400px;
-                max-width: 95vw; /* Adaptation mobile */
+                max-width: 95vw;
+            }
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            button {
+                max-width: 95vw;
+                width: 95vw;
             }
         }
         /* Aide modale */
@@ -289,6 +297,28 @@
         .hidden {
             display: none !important;
         }
+        /* Styles spécifiques pour mobile */
+        @media (max-width: 768px) {
+            body {
+                overflow-y: auto;
+                height: auto;
+            }
+            .container {
+                gap: 10px;
+            }
+            .consigne {
+                margin: 5px;
+                width: 98%;
+            }
+            .help-buttons {
+                flex-direction: column;
+                width: 95%;
+            }
+            .helpBtn {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -310,7 +340,6 @@
         </div>
 
         <div class="controls">
-            <!-- Supprimé les boutons 1 et 2, renommé le bouton 3 -->
             <button id="randomBothBtn">Position/Cap Aléatoire (3)</button>
             <button id="toggleReponseBtn">Afficher/Masquer Réponse</button>
         </div>
@@ -434,8 +463,17 @@
                       ('ontouchstart' in window) || 
                       (navigator.maxTouchPoints > 0);
             
-            // Canvas plus large pour éviter le débordement
-            let canvas = createCanvas(1000, 500); // Largeur augmentée à 1000px
+            // Canvas adaptatif selon le device
+            let canvasWidth, canvasHeight;
+            if (isMobile) {
+                canvasWidth = windowWidth * 0.95;
+                canvasHeight = windowHeight * 0.6;
+            } else {
+                canvasWidth = 1000;
+                canvasHeight = 500;
+            }
+            
+            let canvas = createCanvas(canvasWidth, canvasHeight);
             canvas.parent('canvasContainer');
             canvas.style('display', 'block');
             canvas.style('cursor', 'default');
@@ -573,13 +611,24 @@
 
             let NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2;
             
-            // Positionnement des éléments avec plus d'espace
-            NDX = 200; // Décalé vers la droite pour plus d'espace
-            NDY = 183;
-            NDBX1 = 600; // Décalé vers la droite
-            NDBY1 = 183;
-            NDBX2 = 850; // Décalé vers la droite
-            NDBY2 = 383;
+            // Positionnement adaptatif selon le device
+            if (isMobile) {
+                // Layout vertical pour mobile
+                NDX = width * 0.3;
+                NDY = height * 0.3;
+                NDBX1 = width * 0.7;
+                NDBY1 = height * 0.25;
+                NDBX2 = width * 0.7;
+                NDBY2 = height * 0.5;
+            } else {
+                // Layout horizontal pour desktop
+                NDX = 200;
+                NDY = 183;
+                NDBX1 = 600;
+                NDBY1 = 183;
+                NDBX2 = 850;
+                NDBY2 = 383;
+            }
 
             calculateBaliseZone(NDBX1, NDBY1, NDBX2, NDBY2);
             drawBaliseZone();
@@ -591,7 +640,17 @@
                 mmy = centerY * zoomScale + offsetY;
             }
 
-            let cadreSize = 368, roseSize = 368, traicapSize = 368;
+            // Tailles adaptatives
+            let cadreSize, roseSize, traicapSize;
+            if (isMobile) {
+                cadreSize = min(width, height) * 0.4;
+                roseSize = min(width, height) * 0.35;
+                traicapSize = min(width, height) * 0.4;
+            } else {
+                cadreSize = 368;
+                roseSize = 368;
+                traicapSize = 368;
+            }
 
             drawMainElements(NDX, NDY, cadreSize, roseSize, traicapSize, NDBX1, NDBY1, NDBX2, NDBY2);
 
@@ -625,7 +684,7 @@
             noStroke();
             
             fill(0, 100, 255);
-            textSize(12);
+            textSize(isMobile ? 10 : 12);
             textAlign(CENTER);
             text("Zone de déplacement de l'avion", 
                  baliseZone.x + baliseZone.width/2, 
@@ -943,8 +1002,12 @@
         }
 
         function windowResized() {
-            // Canvas plus large
-            resizeCanvas(1000, 500);
+            // Redimensionnement adaptatif
+            if (isMobile) {
+                resizeCanvas(windowWidth * 0.95, windowHeight * 0.6);
+            } else {
+                resizeCanvas(1000, 500);
+            }
         }
 
         // Fonctions pour les boutons de contrôle
