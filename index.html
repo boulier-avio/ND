@@ -296,8 +296,8 @@
         
         <div class="consigne">
             <h3>📋 Consigne :</h3>
-            <p><strong>Détermine la position de l'avion, son cap, le gisement ainsi que les relèvements QDR et QDM à partir de l'instrument.</strong></p>
-            <p>Déplacez l'avion dans la zone bleue et modifiez son cap pour observer les changements dans les mesures.</p>
+            <p><strong>Détermine le cap de l'avion puis pour chacune des balise trouve le gisement ainsi que les relèvements QDR et QDM.</strong></p>
+            <p>Déplacez l'avion dans la zone bleue et modifiez son cap pour observer les changements dans sur le ND.</p>
             
             <div class="astuce">
                 <strong>Astuce :</strong><br>
@@ -321,11 +321,10 @@
                 <div id="mobileControls" class="mobile-controls hidden">
                     <button class="control-btn" id="capPlus">+</button>
                     <button class="control-btn" id="capMoins">-</button>
-                    <button class="reponse-btn" id="mobileToggleReponse">Afficher/Cacher Réponses</button>
                 </div>
 
                 <div id="desktopControls" class="desktop-controls hidden">
-                    <button class="reponse-btn" id="desktopToggleReponse">Afficher/Cacher Réponses</button>
+                    <!-- Contrôles desktop - vide pour l'instant -->
                 </div>
             </div>
             <div id="reponsesBox">
@@ -471,8 +470,6 @@
             const desktopControls = document.getElementById('desktopControls');
             const capPlusBtn = document.getElementById('capPlus');
             const capMoinsBtn = document.getElementById('capMoins');
-            const mobileToggleBtn = document.getElementById('mobileToggleReponse');
-            const desktopToggleBtn = document.getElementById('desktopToggleReponse');
 
             if (isMobile) {
                 // Afficher les contrôles mobiles
@@ -508,33 +505,10 @@
                     }, {passive: false});
                 }
                 
-                // Bouton réponse mobile
-                if (mobileToggleBtn) {
-                    mobileToggleBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleReponse();
-                    });
-                    
-                    mobileToggleBtn.addEventListener('touchstart', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleReponse();
-                    });
-                }
-                
             } else {
                 // Afficher les contrôles desktop
                 if (mobileControls) mobileControls.classList.add('hidden');
                 if (desktopControls) desktopControls.classList.remove('hidden');
-                
-                // Bouton réponse desktop
-                if (desktopToggleBtn) {
-                    desktopToggleBtn.addEventListener('click', function(e) {
-                        reponse = !reponse;
-                        updateAnswers();
-                    });
-                }
             }
         }
 
@@ -902,12 +876,10 @@
                 
                 const capPlusBtn = document.getElementById('capPlus');
                 const capMoinsBtn = document.getElementById('capMoins');
-                const reponseBtn = document.getElementById('mobileToggleReponse');
                 
                 const isOnButton = 
                     (capPlusBtn && isTouchInElement(touchX, touchY, capPlusBtn)) ||
-                    (capMoinsBtn && isTouchInElement(touchX, touchY, capMoinsBtn)) ||
-                    (reponseBtn && isTouchInElement(touchX, touchY, reponseBtn));
+                    (capMoinsBtn && isTouchInElement(touchX, touchY, capMoinsBtn));
                 
                 // Si ce n'est pas sur un bouton, gérer le déplacement
                 if (!isOnButton) {
