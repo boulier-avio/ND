@@ -952,5 +952,86 @@
                 } else if (touches.length === 2) {
                     let currentDistance = dist(
                         touches[0].x, touches[0].y,
-                        touches[1].
-                        
+                        touches[1].x, touches[1].y
+                    );
+                    
+                    let zoomFactor = currentDistance / lastTouchDistance;
+                    zoomScale *= zoomFactor;
+                    zoomScale = constrain(zoomScale, 0.5, 3.0);
+                    
+                    lastTouchDistance = currentDistance;
+                }
+            }
+            return false;
+        }
+
+        function touchEnded() {
+            if (isMobile) {
+                aircraftMoving = false;
+                if (touches.length === 0) {
+                    isDragging = false;
+                }
+            }
+            return false;
+        }
+
+        function isTouchInElement(touchX, touchY, element) {
+            if (!element) return false;
+            const rect = element.getBoundingClientRect();
+            return (
+                touchX >= rect.left &&
+                touchX <= rect.right &&
+                touchY >= rect.top &&
+                touchY <= rect.bottom
+            );
+        }
+
+        function windowResized() {
+            resizeCanvas(800, 500);
+        }
+
+        // Fonctions pour les boutons de contrôle
+        function randomPosition() {
+            let centerX = baliseZone.x + baliseZone.width / 2;
+            let centerY = baliseZone.y + baliseZone.height / 2;
+            
+            let randomX = random(baliseZone.x, baliseZone.x + baliseZone.width);
+            let randomY = random(baliseZone.y, baliseZone.y + baliseZone.height);
+            
+            mmx = randomX * zoomScale + offsetX;
+            mmy = randomY * zoomScale + offsetY;
+        }
+
+        function randomCap() {
+            rose = random(0, 359);
+        }
+
+        function randomBoth() {
+            randomPosition();
+            randomCap();
+        }
+
+        function toggleReponse() {
+            reponse = !reponse;
+            updateAnswers();
+        }
+
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('gesturechange', function(e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('gestureend', function(e) {
+            e.preventDefault();
+        });
+    </script>
+</body>
+</html>
