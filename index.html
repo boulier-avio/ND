@@ -130,6 +130,7 @@
             min-width: 200px;
             max-width: 800px;
             position: relative;
+            height: 500px;
         }
         #reponsesBox {
             flex: 1 1 0%;
@@ -164,6 +165,9 @@
             .consigne {
                 padding: 12px;
                 margin: 8px 10px;
+            }
+            #canvasContainer {
+                height: 400px;
             }
         }
         /* Aide modale */
@@ -281,6 +285,9 @@
         .contact-info a:hover {
             text-decoration: underline;
         }
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -311,13 +318,13 @@
         <div class="jeu-reponse-row">
             <div id="canvasContainer">
                 <!-- Le canvas sera inséré ici via JS -->
-                <div class="mobile-controls">
+                <div id="mobileControls" class="mobile-controls hidden">
                     <button class="control-btn" id="capPlus">+</button>
                     <button class="control-btn" id="capMoins">-</button>
-                    <button class="reponse-btn" id="toggleReponse">Afficher/Cacher Réponses</button>
+                    <button class="reponse-btn" id="mobileToggleReponse">Afficher/Cacher Réponses</button>
                 </div>
 
-                <div class="desktop-controls">
+                <div id="desktopControls" class="desktop-controls hidden">
                     <button class="reponse-btn" id="desktopToggleReponse">Afficher/Cacher Réponses</button>
                 </div>
             </div>
@@ -408,16 +415,21 @@
         };
 
         function preload() {
-            imgNDcadre = loadImage('NDcadre.png');
-            imgNDmaquette = loadImage('NDmaquette.png');
-            imgNDrose = loadImage('NDrose.png');
-            flecheNDDouble = loadImage('NDDouble.png');
-            flecheNDSimple = loadImage('NDSimple.png');
-            imgNDB = loadImage('NDB.png');
-            imgPlane = loadImage('plane.png');
-            imgtraicap = loadImage('traicap.png');
-            
-            imagesLoaded = true;
+            // Images avec gestion d'erreur
+            try {
+                imgNDcadre = loadImage('NDcadre.png');
+                imgNDmaquette = loadImage('NDmaquette.png');
+                imgNDrose = loadImage('NDrose.png');
+                flecheNDDouble = loadImage('NDDouble.png');
+                flecheNDSimple = loadImage('NDSimple.png');
+                imgNDB = loadImage('NDB.png');
+                imgPlane = loadImage('plane.png');
+                imgtraicap = loadImage('traicap.png');
+                imagesLoaded = true;
+            } catch (e) {
+                console.log("Certaines images n'ont pas pu être chargées, utilisation des graphiques de secours");
+                imagesLoaded = false;
+            }
         }
 
         function setup() {
@@ -425,7 +437,7 @@
                       ('ontouchstart' in window) || 
                       (navigator.maxTouchPoints > 0);
             
-            let canvas = createCanvas(windowWidth, windowHeight);
+            let canvas = createCanvas(800, 500);
             canvas.parent('canvasContainer');
             canvas.style('display', 'block');
             canvas.style('cursor', 'default');
@@ -449,97 +461,125 @@
             rectMode(CENTER);
             textAlign(LEFT, CENTER);
             
-            setupControls();
             setupButtonEvents();
+            setupControls();
         }
 
         function setupControls() {
+            // S'assurer que les éléments existent avant d'ajouter des écouteurs
+            const mobileControls = document.getElementById('mobileControls');
+            const desktopControls = document.getElementById('desktopControls');
+            const capPlusBtn = document.getElementById('capPlus');
+            const capMoinsBtn = document.getElementById('capMoins');
+            const mobileToggleBtn = document.getElementById('mobileToggleReponse');
+            const desktopToggleBtn = document.getElementById('desktopToggleReponse');
+
             if (isMobile) {
-                // Boutons + et -
-                document.getElementById('capPlus').addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    capPlusPressed = true;
-                }, {passive: false});
+                // Afficher les contrôles mobiles
+                if (mobileControls) mobileControls.classList.remove('hidden');
+                if (desktopControls) desktopControls.classList.add('hidden');
                 
-                document.getElementById('capPlus').addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    capPlusPressed = false;
-                }, {passive: false});
-                
-                document.getElementById('capMoins').addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    capMoinsPressed = true;
-                }, {passive: false});
-                
-                document.getElementById('capMoins').addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    capMoinsPressed = false;
-                }, {passive: false});
-                
-                // SOLUTION pour le bouton réponse
-                const reponseBtn = document.getElementById('toggleReponse');
-                
-                reponseBtn.addEventListener('click', handleReponseClick);
-                reponseBtn.addEventListener('touchstart', handleReponseTouch);
-                
-                function handleReponseClick(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleReponse();
-                    return false;
+                // Boutons + et - pour mobile
+                if (capPlusBtn) {
+                    capPlusBtn.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        capPlusPressed = true;
+                    }, {passive: false});
+                    
+                    capPlusBtn.addEventListener('touchend', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        capPlusPressed = false;
+                    }, {passive: false});
                 }
                 
-                function handleReponseTouch(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleReponse();
-                    return false;
+                if (capMoinsBtn) {
+                    capMoinsBtn.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        capMoinsPressed = true;
+                    }, {passive: false});
+                    
+                    capMoinsBtn.addEventListener('touchend', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        capMoinsPressed = false;
+                    }, {passive: false});
                 }
                 
-                function toggleReponse() {
-                    reponse = !reponse;
-                    updateAnswers();
+                // Bouton réponse mobile
+                if (mobileToggleBtn) {
+                    mobileToggleBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleReponse();
+                    });
+                    
+                    mobileToggleBtn.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleReponse();
+                    });
                 }
                 
-                document.querySelector('.mobile-controls').style.display = 'flex';
-                document.querySelector('.desktop-controls').style.display = 'none';
-                document.querySelector('.contact-info').style.display = 'none';
             } else {
-                document.getElementById('desktopToggleReponse').addEventListener('click', function(e) {
-                    reponse = !reponse;
-                    updateAnswers();
-                });
+                // Afficher les contrôles desktop
+                if (mobileControls) mobileControls.classList.add('hidden');
+                if (desktopControls) desktopControls.classList.remove('hidden');
                 
-                document.querySelector('.mobile-controls').style.display = 'none';
-                document.querySelector('.desktop-controls').style.display = 'flex';
-                document.querySelector('.contact-info').style.display = 'block';
+                // Bouton réponse desktop
+                if (desktopToggleBtn) {
+                    desktopToggleBtn.addEventListener('click', function(e) {
+                        reponse = !reponse;
+                        updateAnswers();
+                    });
+                }
             }
         }
 
         function setupButtonEvents() {
-            // Boutons de contrôle
-            document.getElementById('randomPositionBtn').addEventListener('click', randomPosition);
-            document.getElementById('randomCapBtn').addEventListener('click', randomCap);
-            document.getElementById('randomBothBtn').addEventListener('click', randomBoth);
-            document.getElementById('toggleReponseBtn').addEventListener('click', toggleReponse);
+            // Boutons de contrôle principaux
+            const randomPositionBtn = document.getElementById('randomPositionBtn');
+            const randomCapBtn = document.getElementById('randomCapBtn');
+            const randomBothBtn = document.getElementById('randomBothBtn');
+            const toggleReponseBtn = document.getElementById('toggleReponseBtn');
             
-            // Événements tactiles
-            document.getElementById('randomPositionBtn').addEventListener('touchend', function(e) {e.preventDefault(); randomPosition();});
-            document.getElementById('randomCapBtn').addEventListener('touchend', function(e) {e.preventDefault(); randomCap();});
-            document.getElementById('randomBothBtn').addEventListener('touchend', function(e) {e.preventDefault(); randomBoth();});
-            document.getElementById('toggleReponseBtn').addEventListener('touchend', function(e) {e.preventDefault(); toggleReponse();});
+            if (randomPositionBtn) {
+                randomPositionBtn.addEventListener('click', randomPosition);
+                randomPositionBtn.addEventListener('touchend', function(e) {e.preventDefault(); randomPosition();});
+            }
+            
+            if (randomCapBtn) {
+                randomCapBtn.addEventListener('click', randomCap);
+                randomCapBtn.addEventListener('touchend', function(e) {e.preventDefault(); randomCap();});
+            }
+            
+            if (randomBothBtn) {
+                randomBothBtn.addEventListener('click', randomBoth);
+                randomBothBtn.addEventListener('touchend', function(e) {e.preventDefault(); randomBoth();});
+            }
+            
+            if (toggleReponseBtn) {
+                toggleReponseBtn.addEventListener('click', toggleReponse);
+                toggleReponseBtn.addEventListener('touchend', function(e) {e.preventDefault(); toggleReponse();});
+            }
             
             // Boutons d'aide
-            document.getElementById('showTermsBtn').addEventListener('click', function() {
-                document.getElementById('termsModal').classList.add('active');
-            });
-            document.getElementById('showButtonsBtn').addEventListener('click', function() {
-                document.getElementById('buttonsModal').classList.add('active');
-            });
+            const showTermsBtn = document.getElementById('showTermsBtn');
+            const showButtonsBtn = document.getElementById('showButtonsBtn');
+            
+            if (showTermsBtn) {
+                showTermsBtn.addEventListener('click', function() {
+                    document.getElementById('termsModal').classList.add('active');
+                });
+            }
+            
+            if (showButtonsBtn) {
+                showButtonsBtn.addEventListener('click', function() {
+                    document.getElementById('buttonsModal').classList.add('active');
+                });
+            }
             
             // Fermeture des modales
             document.querySelectorAll('.closeBtn').forEach(btn => {
@@ -572,30 +612,13 @@
 
             let NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2;
             
-            if (isMobile) {
-                if (windowWidth > windowHeight) {
-                    NDX = width * 0.25;
-                    NDY = height * 0.3;
-                    NDBX1 = width * 0.65;
-                    NDBY1 = height * 0.25;
-                    NDBX2 = width * 0.65;
-                    NDBY2 = height * 0.5;
-                } else {
-                    NDX = width * 0.3;
-                    NDY = height * 0.25;
-                    NDBX1 = width * 0.7;
-                    NDBY1 = height * 0.25;
-                    NDBX2 = width * 0.7;
-                    NDBY2 = height * 0.5;
-                }
-            } else {
-                NDX = 183;
-                NDY = 183;
-                NDBX1 = 553;
-                NDBY1 = 183;
-                NDBX2 = 753;
-                NDBY2 = 383;
-            }
+            // Positionnement des éléments
+            NDX = 183;
+            NDY = 183;
+            NDBX1 = 553;
+            NDBY1 = 183;
+            NDBX2 = 753;
+            NDBY2 = 383;
 
             calculateBaliseZone(NDBX1, NDBY1, NDBX2, NDBY2);
             drawBaliseZone();
@@ -607,23 +630,7 @@
                 mmy = centerY * zoomScale + offsetY;
             }
 
-            let cadreSize, roseSize, traicapSize;
-            
-            if (isMobile) {
-                if (windowWidth > windowHeight) {
-                    cadreSize = min(width, height) * 0.3;
-                    roseSize = min(width, height) * 0.22;
-                    traicapSize = min(width, height) * 0.3;
-                } else {
-                    cadreSize = min(width, height) * 0.35;
-                    roseSize = min(width, height) * 0.25;
-                    traicapSize = min(width, height) * 0.35;
-                }
-            } else {
-                cadreSize = 368;
-                roseSize = 368;
-                traicapSize = 368;
-            }
+            let cadreSize = 368, roseSize = 368, traicapSize = 368;
 
             drawMainElements(NDX, NDY, cadreSize, roseSize, traicapSize, NDBX1, NDBY1, NDBX2, NDBY2);
 
@@ -631,11 +638,9 @@
 
             drawAircraft(NDX);
 
-            // Interface utilisateur - DESSINÉE EN DEHORS DE LA TRANSFORMATION
             pop(); // Fin de la transformation de zoom/déplacement
             
             updateAnswers();
-
         }
 
         function calculateBaliseZone(NDBX1, NDBY1, NDBX2, NDBY2) {
@@ -714,8 +719,10 @@
                     rotate(radians(-rose));
                     image(imgNDrose, 0, 0, roseSize, roseSize); 
                     pop();
-                   // Dessiner l'image traicap.png fixe (ne bouge pas avec le cap)
+                   
+                    // Dessiner l'image traicap.png fixe (ne bouge pas avec le cap)
                     image(imgtraicap, NDX, NDY, cadreSize, cadreSize); 
+                    
                     push();
                     translate(NDX, NDY);
                     rotate(radians(QDM));  
@@ -827,19 +834,22 @@
         }
 
         function updateAnswers() {
-            let txt = "";
-            if (reponse) {
-                txt += "QDR1 = " + Math.round(QDR1) + "°<br>";
-                txt += "QDM1 = " + Math.round(QDM1) + "°<br>";
-                txt += "GT1 = " + Math.round(GT) + "°<br>";
-                txt += "CAP = " + Math.round(rose) + "°<br>";
-                txt += "QDR2 = " + Math.round(QDR3) + "°<br>";
-                txt += "QDM2 = " + Math.round(QDM) + "°<br>";
-                txt += "GT2 = " + Math.round(GT1) + "°";
-            } else {
-                txt += "QDR1 = ?<br>QDM1 = ?<br>GT1 = ?<br>CAP = ?<br>QDR2 = ?<br>QDM2 = ?<br>GT2 = ?";
+            const reponsesBox = document.getElementById('reponsesBox');
+            if (reponsesBox) {
+                let txt = "";
+                if (reponse) {
+                    txt += "QDR1 = " + Math.round(QDR1) + "°<br>";
+                    txt += "QDM1 = " + Math.round(QDM1) + "°<br>";
+                    txt += "GT1 = " + Math.round(GT) + "°<br>";
+                    txt += "CAP = " + Math.round(rose) + "°<br>";
+                    txt += "QDR2 = " + Math.round(QDR3) + "°<br>";
+                    txt += "QDM2 = " + Math.round(QDM) + "°<br>";
+                    txt += "GT2 = " + Math.round(GT1) + "°";
+                } else {
+                    txt += "QDR1 = ?<br>QDM1 = ?<br>GT1 = ?<br>CAP = ?<br>QDR2 = ?<br>QDM2 = ?<br>GT2 = ?";
+                }
+                reponsesBox.innerHTML = txt;
             }
-            document.getElementById('reponsesBox').innerHTML = txt;
         }
 
         function mousePressed() {
@@ -892,12 +902,12 @@
                 
                 const capPlusBtn = document.getElementById('capPlus');
                 const capMoinsBtn = document.getElementById('capMoins');
-                const reponseBtn = document.getElementById('toggleReponse');
+                const reponseBtn = document.getElementById('mobileToggleReponse');
                 
                 const isOnButton = 
-                    isTouchInElement(touchX, touchY, capPlusBtn) ||
-                    isTouchInElement(touchX, touchY, capMoinsBtn) ||
-                    isTouchInElement(touchX, touchY, reponseBtn);
+                    (capPlusBtn && isTouchInElement(touchX, touchY, capPlusBtn)) ||
+                    (capMoinsBtn && isTouchInElement(touchX, touchY, capMoinsBtn)) ||
+                    (reponseBtn && isTouchInElement(touchX, touchY, reponseBtn));
                 
                 // Si ce n'est pas sur un bouton, gérer le déplacement
                 if (!isOnButton) {
@@ -942,85 +952,5 @@
                 } else if (touches.length === 2) {
                     let currentDistance = dist(
                         touches[0].x, touches[0].y,
-                        touches[1].x, touches[1].y
-                    );
-                    
-                    let zoomFactor = currentDistance / lastTouchDistance;
-                    zoomScale *= zoomFactor;
-                    zoomScale = constrain(zoomScale, 0.5, 3.0);
-                    
-                    lastTouchDistance = currentDistance;
-                }
-            }
-            return false;
-        }
-
-        function touchEnded() {
-            if (isMobile) {
-                aircraftMoving = false;
-                if (touches.length === 0) {
-                    isDragging = false;
-                }
-            }
-            return false;
-        }
-
-        function isTouchInElement(touchX, touchY, element) {
-            const rect = element.getBoundingClientRect();
-            return (
-                touchX >= rect.left &&
-                touchX <= rect.right &&
-                touchY >= rect.top &&
-                touchY <= rect.bottom
-            );
-        }
-
-        function windowResized() {
-            resizeCanvas(windowWidth, windowHeight);
-        }
-
-        // Fonctions pour les boutons de contrôle
-        function randomPosition() {
-            let centerX = baliseZone.x + baliseZone.width / 2;
-            let centerY = baliseZone.y + baliseZone.height / 2;
-            
-            let randomX = random(baliseZone.x, baliseZone.x + baliseZone.width);
-            let randomY = random(baliseZone.y, baliseZone.y + baliseZone.height);
-            
-            mmx = randomX * zoomScale + offsetX;
-            mmy = randomY * zoomScale + offsetY;
-        }
-
-        function randomCap() {
-            rose = random(0, 359);
-        }
-
-        function randomBoth() {
-            randomPosition();
-            randomCap();
-        }
-
-        function toggleReponse() {
-            reponse = !reponse;
-            updateAnswers();
-        }
-
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-            return false;
-        });
-
-        document.addEventListener('gesturestart', function(e) {
-            e.preventDefault();
-        });
-
-        document.addEventListener('gesturechange', function(e) {
-            e.preventDefault();
-        });
-
-        document.addEventListener('gestureend', function(e) {
-            e.preventDefault();
-        });
-    </script>
-</body>
-</html>
+                        touches[1].
+                        
