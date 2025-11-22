@@ -19,8 +19,8 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            touch-action: pan-y; /* Permet le défilement vertical */
-            overflow-y: auto; /* Active le défilement vertical */
+            touch-action: pan-y;
+            overflow-y: auto;
             overflow-x: hidden;
         }
         h1 {
@@ -132,6 +132,8 @@
             max-width: 1000px;
             position: relative;
             height: 500px;
+            border: 1px solid #ccc;
+            background: white;
         }
         #reponsesBox {
             flex: 1 1 0%;
@@ -180,7 +182,6 @@
                 width: 95vw;
             }
         }
-        /* Aide modale */
         .modal {
             display: none;
             position: fixed;
@@ -298,26 +299,13 @@
         .hidden {
             display: none !important;
         }
-        /* Styles spécifiques pour mobile */
-        @media (max-width: 768px) {
-            .container {
-                gap: 10px;
-            }
-            .consigne {
-                margin: 5px;
-                width: 98%;
-            }
-            .help-buttons {
-                flex-direction: column;
-                width: 95%;
-            }
-            .helpBtn {
-                width: 100%;
-                margin-bottom: 5px;
-            }
-            #canvasContainer {
-                height: 350px;
-            }
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            color: #666;
         }
     </style>
 </head>
@@ -346,49 +334,42 @@
         
         <div class="jeu-reponse-row">
             <div id="canvasContainer">
-                <!-- Le canvas sera inséré ici via JS -->
+                <div class="loading">Chargement des images...</div>
                 <div id="mobileControls" class="mobile-controls hidden">
                     <button class="control-btn" id="capPlus">+</button>
                     <button class="control-btn" id="capMoins">-</button>
                 </div>
-
-                <div id="desktopControls" class="desktop-controls hidden">
-                    <!-- Contrôles desktop - vide pour l'instant -->
-                </div>
+                <div id="desktopControls" class="desktop-controls hidden"></div>
             </div>
-            <div id="reponsesBox">
-                <!-- Les réponses s'affichent ici via JS -->
-            </div>
+            <div id="reponsesBox">QDR1 = ?<br>QDM1 = ?<br>GT1 = ?<br>CAP = ?<br>QDR2 = ?<br>QDM2 = ?<br>GT2 = ?</div>
         </div>
         
         <div class="help-buttons">
-            <button id="showTermsBtn" class="helpBtn" type="button">❓ Explication des termes (GT, QDM, QDR, Cap)</button>
-            <button id="showButtonsBtn" class="helpBtn" type="button">🔄 Explication des boutons</button>
+            <button id="showTermsBtn" class="helpBtn">❓ Explication des termes</button>
+            <button id="showButtonsBtn" class="helpBtn">🔄 Explication des boutons</button>
         </div>
         
-        <!-- Modal pour les termes -->
         <div id="termsModal" class="modal">
             <div>
-                <button class="closeBtn" aria-label="Fermer la fenêtre d'aide">&times;</button>
-                <h2 style="font-size:1.1em;margin-top:0;">Que signifient GT, QDM, QDR et Cap&nbsp;?</h2>
-                <ul style="padding-left:16px;font-size:1em;line-height:1.5;">
-                    <li><strong>GT&nbsp;:</strong> <em>Gisement transmis</em> par l'ADF, angle entre le nez de l'avion et la direction de la balise.</li>
-                    <li><strong>QDM&nbsp;:</strong> Cap magnétique à suivre pour aller vers la balise depuis la position de l'avion.</li>
-                    <li><strong>QDR&nbsp;:</strong> Relèvement magnétique de la balise, cap à suivre pour s'éloigner de la balise.</li>
-                    <li><strong>Cap&nbsp;:</strong> Direction (en degrés) du nez de l'avion par rapport au nord magnétique.</li>
+                <button class="closeBtn">&times;</button>
+                <h2>Que signifient GT, QDM, QDR et Cap ?</h2>
+                <ul>
+                    <li><strong>GT :</strong> Gisement transmis par l'ADF, angle entre le nez de l'avion et la direction de la balise.</li>
+                    <li><strong>QDM :</strong> Cap magnétique à suivre pour aller vers la balise depuis la position de l'avion.</li>
+                    <li><strong>QDR :</strong> Relèvement magnétique de la balise, cap à suivre pour s'éloigner de la balise.</li>
+                    <li><strong>Cap :</strong> Direction du nez de l'avion par rapport au nord magnétique.</li>
                 </ul>
             </div>
         </div>
         
-        <!-- Modal pour les boutons -->
         <div id="buttonsModal" class="modal">
             <div>
-                <button class="closeBtn" aria-label="Fermer la fenêtre d'aide">&times;</button>
-                <h2 style="font-size:1.1em;margin-top:0;">À quoi servent les boutons&nbsp;?</h2>
-                <ul style="padding-left:16px;font-size:1em;line-height:1.5;">
-                    <li><strong>Position/Cap Aléatoire (3)&nbsp;:</strong> Change à la fois la position et le cap de l'avion.</li>
+                <button class="closeBtn">&times;</button>
+                <h2>À quoi servent les boutons ?</h2>
+                <ul>
+                    <li><strong>Position/Cap Aléatoire (3) :</strong> Change à la fois la position et le cap de l'avion.</li>
                     <li>Sur ordinateur cela fonctionne avec la touche 3</li>
-                    <li><strong>Afficher/Masquer Réponse&nbsp;:</strong> Montre ou cache les valeurs réelles (GT, QDM, QDR, Cap).</li>
+                    <li><strong>Afficher/Masquer Réponse :</strong> Montre ou cache les valeurs réelles.</li>
                 </ul>
             </div>
         </div>
@@ -409,7 +390,9 @@
         let baliseLH, baliseRH, avion, avion1;
         let isMobile = false;
         let imagesLoaded = false;
-        
+        let imagesToLoad = 8;
+        let imagesLoadedCount = 0;
+
         // Variables pour le contrôle continu du cap
         let rightMousePressed = false;
         let leftMousePressed = false;
@@ -441,20 +424,34 @@
         };
 
         function preload() {
-            // Images avec gestion d'erreur
-            try {
-                imgNDcadre = loadImage('NDcadre.png');
-                imgNDmaquette = loadImage('NDmaquette.png');
-                imgNDrose = loadImage('NDrose.png');
-                flecheNDDouble = loadImage('NDDouble.png');
-                flecheNDSimple = loadImage('NDSimple.png');
-                imgNDB = loadImage('NDB.png');
-                imgPlane = loadImage('plane.png');
-                imgtraicap = loadImage('traicap.png');
+            // Chargement des images avec gestion d'erreur
+            imgNDcadre = loadImage('NDcadre.png', imageLoaded, imageLoadError);
+            imgNDmaquette = loadImage('NDmaquette.png', imageLoaded, imageLoadError);
+            imgNDrose = loadImage('NDrose.png', imageLoaded, imageLoadError);
+            flecheNDDouble = loadImage('NDDouble.png', imageLoaded, imageLoadError);
+            flecheNDSimple = loadImage('NDSimple.png', imageLoaded, imageLoadError);
+            imgNDB = loadImage('NDB.png', imageLoaded, imageLoadError);
+            imgPlane = loadImage('plane.png', imageLoaded, imageLoadError);
+            imgtraicap = loadImage('traicap.png', imageLoaded, imageLoadError);
+        }
+
+        function imageLoaded() {
+            imagesLoadedCount++;
+            console.log(`Image chargée (${imagesLoadedCount}/${imagesToLoad})`);
+            if (imagesLoadedCount === imagesToLoad) {
                 imagesLoaded = true;
-            } catch (e) {
-                console.log("Certaines images n'ont pas pu être chargées, utilisation des graphiques de secours");
+                document.querySelector('.loading').style.display = 'none';
+                console.log("Toutes les images sont chargées");
+            }
+        }
+
+        function imageLoadError() {
+            imagesLoadedCount++;
+            console.log(`Erreur de chargement d'image (${imagesLoadedCount}/${imagesToLoad})`);
+            if (imagesLoadedCount === imagesToLoad) {
                 imagesLoaded = false;
+                document.querySelector('.loading').textContent = 'Images non chargées - Mode graphique de secours';
+                console.log("Certaines images n'ont pas pu être chargées");
             }
         }
 
@@ -463,7 +460,6 @@
                       ('ontouchstart' in window) || 
                       (navigator.maxTouchPoints > 0);
             
-            // Canvas adaptatif selon le device
             let canvasWidth, canvasHeight;
             if (isMobile) {
                 canvasWidth = windowWidth * 0.95;
@@ -478,21 +474,20 @@
             canvas.style('display', 'block');
             canvas.style('cursor', 'default');
             
-            // Gestion des événements tactiles uniquement sur le canvas
+            // Gestion des événements tactiles
             canvas.elt.addEventListener('touchstart', function(e) {
                 if (isInBaliseZone((e.touches[0].clientX - offsetX) / zoomScale, 
                                   (e.touches[0].clientY - offsetY) / zoomScale)) {
-                    e.preventDefault(); // Seulement dans la zone de jeu
+                    e.preventDefault();
                 }
             }, { passive: false });
             
             canvas.elt.addEventListener('touchmove', function(e) {
                 if (aircraftMoving) {
-                    e.preventDefault(); // Seulement quand on déplace l'avion
+                    e.preventDefault();
                 }
             }, { passive: false });
             
-            // Gestes de zoom uniquement sur le canvas
             canvas.elt.addEventListener('gesturestart', function(e) {
                 e.preventDefault();
             });
@@ -514,7 +509,7 @@
             setupButtonEvents();
             setupControls();
             
-            // Position initiale de l'avion au centre de la zone
+            // Position initiale de l'avion
             let centerX = (min(600, 850) + max(600, 850)) / 2;
             let centerY = (min(183, 383) + max(183, 383)) / 2;
             mmx = centerX * zoomScale + offsetX;
@@ -522,28 +517,23 @@
         }
 
         function setupControls() {
-            // S'assurer que les éléments existent avant d'ajouter des écouteurs
             const mobileControls = document.getElementById('mobileControls');
             const desktopControls = document.getElementById('desktopControls');
             const capPlusBtn = document.getElementById('capPlus');
             const capMoinsBtn = document.getElementById('capMoins');
 
             if (isMobile) {
-                // Afficher les contrôles mobiles
                 if (mobileControls) mobileControls.classList.remove('hidden');
                 if (desktopControls) desktopControls.classList.add('hidden');
                 
-                // Boutons + et - pour mobile
                 if (capPlusBtn) {
                     capPlusBtn.addEventListener('touchstart', function(e) {
                         e.preventDefault();
-                        e.stopPropagation();
                         capPlusPressed = true;
                     }, {passive: false});
                     
                     capPlusBtn.addEventListener('touchend', function(e) {
                         e.preventDefault();
-                        e.stopPropagation();
                         capPlusPressed = false;
                     }, {passive: false});
                 }
@@ -551,26 +541,21 @@
                 if (capMoinsBtn) {
                     capMoinsBtn.addEventListener('touchstart', function(e) {
                         e.preventDefault();
-                        e.stopPropagation();
                         capMoinsPressed = true;
                     }, {passive: false});
                     
                     capMoinsBtn.addEventListener('touchend', function(e) {
                         e.preventDefault();
-                        e.stopPropagation();
                         capMoinsPressed = false;
                     }, {passive: false});
                 }
-                
             } else {
-                // Afficher les contrôles desktop
                 if (mobileControls) mobileControls.classList.add('hidden');
                 if (desktopControls) desktopControls.classList.remove('hidden');
             }
         }
 
         function setupButtonEvents() {
-            // Boutons de contrôle principaux - seulement le bouton "Position/Cap Aléatoire"
             const randomBothBtn = document.getElementById('randomBothBtn');
             const toggleReponseBtn = document.getElementById('toggleReponseBtn');
             
@@ -584,7 +569,6 @@
                 toggleReponseBtn.addEventListener('touchend', function(e) {e.preventDefault(); toggleReponse();});
             }
             
-            // Boutons d'aide
             const showTermsBtn = document.getElementById('showTermsBtn');
             const showButtonsBtn = document.getElementById('showButtonsBtn');
             
@@ -600,7 +584,6 @@
                 });
             }
             
-            // Fermeture des modales
             document.querySelectorAll('.closeBtn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     this.closest('.modal').classList.remove('active');
@@ -631,9 +614,7 @@
 
             let NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2;
             
-            // Positionnement adaptatif selon le device
             if (isMobile) {
-                // Layout vertical pour mobile
                 NDX = width * 0.3;
                 NDY = height * 0.3;
                 NDBX1 = width * 0.7;
@@ -641,7 +622,6 @@
                 NDBX2 = width * 0.7;
                 NDBY2 = height * 0.5;
             } else {
-                // Layout horizontal pour desktop
                 NDX = 200;
                 NDY = 183;
                 NDBX1 = 600;
@@ -660,7 +640,6 @@
                 mmy = centerY * zoomScale + offsetY;
             }
 
-            // Tailles adaptatives
             let cadreSize, roseSize, traicapSize;
             if (isMobile) {
                 cadreSize = min(width, height) * 0.4;
@@ -673,28 +652,20 @@
             }
 
             drawMainElements(NDX, NDY, cadreSize, roseSize, traicapSize, NDBX1, NDBY1, NDBX2, NDBY2);
-
             calculateNavigation(NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2);
-
             drawAircraft(NDX);
-
-            // Dessiner les numéros sur les balises (APRÈS les images)
             drawBaliseNumbers(NDBX1, NDBY1, NDBX2, NDBY2);
 
-            pop(); // Fin de la transformation de zoom/déplacement
-            
+            pop();
             updateAnswers();
         }
 
         function drawBaliseNumbers(NDBX1, NDBY1, NDBX2, NDBY2) {
-            // Numéro 1 sur la balise de gauche
             fill(255);
             textSize(isMobile ? 16 : 20);
             textAlign(CENTER, CENTER);
             textStyle(BOLD);
             text("1", NDBX1, NDBY1);
-            
-            // Numéro 2 sur la balise de droite
             text("2", NDBX2, NDBY2);
             textAlign(LEFT, CENTER);
             textStyle(NORMAL);
@@ -777,7 +748,6 @@
                     image(imgNDrose, 0, 0, roseSize, roseSize); 
                     pop();
                    
-                    // Dessiner l'image traicap.png fixe (ne bouge pas avec le cap)
                     image(imgtraicap, NDX, NDY, cadreSize, cadreSize); 
                     
                     push();
@@ -796,6 +766,7 @@
                     image(imgNDB, NDBX2, NDBY2);
                     
                 } catch (e) {
+                    console.log("Erreur lors du dessin des images:", e);
                     drawFallbackGraphics(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2);
                 }
             } else {
@@ -804,24 +775,29 @@
         }
 
         function drawFallbackGraphics(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2) {
+            // Cadre principal
             stroke(0);
             strokeWeight(2);
             noFill();
             rect(NDX, NDY, cadreSize, cadreSize);
             
+            // Rose des vents
             stroke(100);
             strokeWeight(1);
             noFill();
             circle(NDX, NDY, roseSize);
             
+            // Indicateur de cap
             fill(100);
             noStroke();
             rect(NDX-15, NDY, 30, 10);
             
+            // Balises
             fill(255, 0, 0);
             circle(NDBX1, NDBY1, 20);
             circle(NDBX2, NDBY2, 20);
             
+            // Flèches
             stroke(255, 0, 0);
             strokeWeight(3);
             push();
@@ -942,7 +918,6 @@
         }
 
         function keyPressed() {
-            // Seulement la touche 3 fonctionne maintenant
             if (key === '3') {
                 randomBoth();
             }
@@ -950,7 +925,6 @@
 
         function touchStarted(event) {
             if (isMobile) {
-                // Toujours permettre le déplacement sur mobile
                 const touchX = event.touches[0].clientX;
                 const touchY = event.touches[0].clientY;
                 
@@ -962,4 +936,101 @@
                     mmx = touchX;
                     mmy = touchY;
                     
-                   
+                    if (touches.length === 1) {
+                        isDragging = true;
+                        lastTouchX = touchX;
+                        lastTouchY = touchY;
+                    } else if (touches.length === 2) {
+                        lastTouchDistance = dist(
+                            touches[0].x, touches[0].y,
+                            touches[1].x, touches[1].y
+                        );
+                    }
+                }
+                return false;
+            }
+            return false;
+        }
+
+        function touchMoved(event) {
+            if (isMobile && aircraftMoving) {
+                if (touches.length === 1 && isDragging) {
+                    let targetX = touches[0].x;
+                    let targetY = touches[0].y;
+                    
+                    let adjustedTargetX = (targetX - offsetX) / zoomScale;
+                    let adjustedTargetY = (targetY - offsetY) / zoomScale;
+                    
+                    if (isInBaliseZone(adjustedTargetX, adjustedTargetY)) {
+                        mmx = targetX;
+                        mmy = targetY;
+                    }
+                } else if (touches.length === 2) {
+                    let currentDistance = dist(
+                        touches[0].x, touches[0].y,
+                        touches[1].x, touches[1].y
+                    );
+                    
+                    let zoomFactor = currentDistance / lastTouchDistance;
+                    zoomScale *= zoomFactor;
+                    zoomScale = constrain(zoomScale, 0.5, 3.0);
+                    
+                    lastTouchDistance = currentDistance;
+                }
+            }
+            return false;
+        }
+
+        function touchEnded() {
+            if (isMobile) {
+                aircraftMoving = false;
+                if (touches.length === 0) {
+                    isDragging = false;
+                }
+            }
+            return false;
+        }
+
+        function windowResized() {
+            if (isMobile) {
+                resizeCanvas(windowWidth * 0.95, windowHeight * 0.5);
+            } else {
+                resizeCanvas(1000, 500);
+            }
+        }
+
+        function randomPosition() {
+            let centerX = baliseZone.x + baliseZone.width / 2;
+            let centerY = baliseZone.y + baliseZone.height / 2;
+            
+            let randomX = random(baliseZone.x, baliseZone.x + baliseZone.width);
+            let randomY = random(baliseZone.y, baliseZone.y + baliseZone.height);
+            
+            mmx = randomX * zoomScale + offsetX;
+            mmy = randomY * zoomScale + offsetY;
+        }
+
+        function randomCap() {
+            rose = random(0, 359);
+        }
+
+        function randomBoth() {
+            randomPosition();
+            randomCap();
+        }
+
+        function toggleReponse() {
+            reponse = !reponse;
+            updateAnswers();
+        }
+
+        // Empêcher le menu contextuel uniquement sur le canvas
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.tagName === 'CANVAS') {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>
