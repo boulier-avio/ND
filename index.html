@@ -149,7 +149,7 @@
         }
         @media (max-width: 900px) {
             body {
-                overflow-y: auto; /* Permettre le défilement sur mobile */
+                overflow-y: auto;
                 height: auto;
             }
             .jeu-reponse-row {
@@ -319,7 +319,7 @@
                 margin-bottom: 5px;
             }
             #canvasContainer {
-                height: 350px; /* Réduit un peu pour mobile */
+                height: 350px;
             }
         }
     </style>
@@ -470,7 +470,7 @@
             let canvasWidth, canvasHeight;
             if (isMobile) {
                 canvasWidth = windowWidth * 0.95;
-                canvasHeight = windowHeight * 0.5; // Réduit à 50% pour permettre le défilement
+                canvasHeight = windowHeight * 0.5;
             } else {
                 canvasWidth = 1000;
                 canvasHeight = 500;
@@ -502,6 +502,12 @@
             
             setupButtonEvents();
             setupControls();
+            
+            // Position initiale de l'avion au centre de la zone
+            let centerX = (min(600, 850) + max(600, 850)) / 2;
+            let centerY = (min(183, 383) + max(183, 383)) / 2;
+            mmx = centerX * zoomScale + offsetX;
+            mmy = centerY * zoomScale + offsetY;
         }
 
         function setupControls() {
@@ -661,7 +667,7 @@
 
             drawAircraft(NDX);
 
-            // Dessiner les numéros sur les balises
+            // Dessiner les numéros sur les balises (APRÈS les images)
             drawBaliseNumbers(NDBX1, NDBY1, NDBX2, NDBY2);
 
             pop(); // Fin de la transformation de zoom/déplacement
@@ -672,13 +678,15 @@
         function drawBaliseNumbers(NDBX1, NDBY1, NDBX2, NDBY2) {
             // Numéro 1 sur la balise de gauche
             fill(255);
-            textSize(isMobile ? 14 : 16);
+            textSize(isMobile ? 16 : 20);
             textAlign(CENTER, CENTER);
+            textStyle(BOLD);
             text("1", NDBX1, NDBY1);
             
             // Numéro 2 sur la balise de droite
             text("2", NDBX2, NDBY2);
             textAlign(LEFT, CENTER);
+            textStyle(NORMAL);
         }
 
         function calculateBaliseZone(NDBX1, NDBY1, NDBX2, NDBY2) {
@@ -931,40 +939,30 @@
 
         function touchStarted(event) {
             if (isMobile) {
-                // Ne traiter que les touches qui ne sont pas sur des boutons
+                // Toujours permettre le déplacement sur mobile
                 const touchX = event.touches[0].clientX;
                 const touchY = event.touches[0].clientY;
                 
-                const capPlusBtn = document.getElementById('capPlus');
-                const capMoinsBtn = document.getElementById('capMoins');
+                let adjustedTouchX = (touchX - offsetX) / zoomScale;
+                let adjustedTouchY = (touchY - offsetY) / zoomScale;
                 
-                const isOnButton = 
-                    (capPlusBtn && isTouchInElement(touchX, touchY, capPlusBtn)) ||
-                    (capMoinsBtn && isTouchInElement(touchX, touchY, capMoinsBtn));
-                
-                // Si ce n'est pas sur un bouton, gérer le déplacement
-                if (!isOnButton) {
-                    let adjustedTouchX = (touchX - offsetX) / zoomScale;
-                    let adjustedTouchY = (touchY - offsetY) / zoomScale;
+                if (isInBaliseZone(adjustedTouchX, adjustedTouchY)) {
+                    aircraftMoving = true;
+                    mmx = touchX;
+                    mmy = touchY;
                     
-                    if (isInBaliseZone(adjustedTouchX, adjustedTouchY)) {
-                        aircraftMoving = true;
-                        mmx = touchX;
-                        mmy = touchY;
-                        
-                        if (touches.length === 1) {
-                            isDragging = true;
-                            lastTouchX = touchX;
-                            lastTouchY = touchY;
-                        } else if (touches.length === 2) {
-                            lastTouchDistance = dist(
-                                touches[0].x, touches[0].y,
-                                touches[1].x, touches[1].y
-                            );
-                        }
+                    if (touches.length === 1) {
+                        isDragging = true;
+                        lastTouchX = touchX;
+                        lastTouchY = touchY;
+                    } else if (touches.length === 2) {
+                        lastTouchDistance = dist(
+                            touches[0].x, touches[0].y,
+                            touches[1].x, touches[1].y
+                        );
                     }
-                    return false;
                 }
+                return false;
             }
             return false;
         }
