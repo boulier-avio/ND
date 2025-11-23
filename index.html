@@ -411,14 +411,7 @@
             imgtraicap = loadImage('traicap.png', imageLoaded, imageLoadError);
         }
 
-        function imageLoaded() {
-            imagesLoadedCount++;
-            console.log(`Image chargée (${imagesLoadedCount}/${imagesToLoad})`);
-            if (imagesLoadedCount === imagesToLoad) {
-                imagesLoaded = true;
-                document.querySelector('.loading').style.display = 'none';
-                console.log("Toutes les images sont chargées");
-            }
+        
         }
 
         function imageLoadError() {
