@@ -496,6 +496,7 @@
                 aircraftMoving = true;
                 mmx = touchX;
                 mmy = touchY;
+                e.preventDefault();
                 
                 if (e.touches.length === 1) {
                     isDragging = true;
@@ -508,7 +509,7 @@
                     );
                 }
                 // Empêcher le défilement SEULEMENT si on touche la zone de l'avion
-                e.preventDefault();
+                
             }
             // Sinon, laisser le défilement se faire normalement
         }
@@ -519,6 +520,7 @@
                 const rect = canvas.elt.getBoundingClientRect();
                 const touchX = touch.clientX - rect.left;
                 const touchY = touch.clientY - rect.top;
+                e.preventDefault();
                 
                 if (e.touches.length === 1 && isDragging) {
                     let adjustedTargetX = (touchX - offsetX) / zoomScale;
@@ -540,7 +542,7 @@
                     zoomScale = constrain(zoomScale, 0.5, 3.0);
                     
                     lastTouchDistance = currentDistance;
-                    e.preventDefault();
+                    
                 }
             }
             // Si aircraftMoving est false, le défilement est autorisé
