@@ -174,11 +174,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-width: 200px;
-            max-width: 1000px;
-            width: 95vw;
+             width: 100vw;
+            max-width: 100vw;
             position: relative;
-            height: 500px;
+            
             border: 1px solid #ccc;
             background: white;
             touch-action: pan-y;
@@ -195,8 +194,8 @@
     border-radius: 10px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     padding: 18px 12px;
-   width: 95vw; /* Largeur adaptée */
-    max-width: 1000px; /* Largeur maximale augmentée */
+    width: 100vw;
+            max-width: 100vw;
     font-size: 1.05em;
     color: #d63c3c;
     display: flex;
@@ -206,8 +205,16 @@
     text-align: center;
             box-sizing: border-box;
         }
+        /* Masquer les boutons cap sur ordinateur */
+        @media (min-width: 901px) {
+            .mobile-only {
+                display: none !important;
+            }
+        }
         @media (max-width: 900px) {
-           
+            .mobile-only {
+                display: flex;
+            }
            
             .consigne {
                 padding: 12px;
@@ -369,14 +376,15 @@
             <div class="astuce">
                 <strong>Astuce :</strong><br>
                 • Sur ordinateur : clic gauche pour déplacer l'avion, clic droit pour modifier le cap<br>
-                • Sur mobile : utilisez les boutons + et - pour modifier le cap, et touchez l'écran pour déplacer l'avion<br>
+                • Sur mobile : utilisez les boutons + et - pour modifier le cap, et le bouton "3" pour changer la position<br>
                 • La flèche double indique le QDM vers la balise de droite (NDB 2)<br>
                 • La flèche simple indique le QDM vers la balise de gauche (NDB 1)
             </div>
         </div>
 
         <div class="controls">
-            <div class="cap-controls">
+            <!-- Boutons cap seulement sur mobile -->
+            <div class="cap-controls mobile-only">
                 <button class="cap-btn" id="capMoins">Cap -</button>
                 <button class="cap-btn" id="capPlus">Cap +</button>
             </div>
@@ -414,8 +422,8 @@
                 <button class="closeBtn">&times;</button>
                 <h2>À quoi servent les boutons ?</h2>
                 <ul>
-                    <li><strong>Boutons + et - :</strong> Modifient le cap de l'avion</li>
-                    <li><strong>Position/Cap Aléatoire (3) :</strong> Change à la fois la position et le cap de l'avion</li>
+                    <li><strong>Boutons + et - (mobile uniquement):</strong> Modifient le cap de l'avion</li>
+                    <li><strong>Position/Cap Aléatoire (3):</strong> Change à la fois la position et le cap de l'avion</li>
                     <li><strong>Afficher/Masquer Réponse :</strong> Montre ou cache les valeurs réelles</li>
                 </ul>
             </div>
@@ -528,10 +536,12 @@
             canvas.elt.style.webkitUserSelect = 'none';
             canvas.elt.style.userSelect = 'none';
             
-            // Gestion des événements tactiles
-            canvas.elt.addEventListener('touchstart', handleTouchStart, { passive: false });
-            canvas.elt.addEventListener('touchmove', handleTouchMove, { passive: false });
-            canvas.elt.addEventListener('touchend', handleTouchEnd);
+            // Gestion des événements tactiles - DÉSACTIVÉ pour mobile
+            if (!isMobile) {
+                canvas.elt.addEventListener('touchstart', handleTouchStart, { passive: false });
+                canvas.elt.addEventListener('touchmove', handleTouchMove, { passive: false });
+                canvas.elt.addEventListener('touchend', handleTouchEnd);
+            }
             
             baliseLH = createVector(0, -10);
             baliseRH = createVector(0, -10);
@@ -571,6 +581,12 @@
             // CORRECTION : Vérifier que canvas est défini
             if (!canvas || !canvas.elt) return;
             
+            // SUR MOBILE : NE PERMETTRE QUE LE BOUTON 3 POUR DÉPLACER L'AVION
+            // Désactiver le déplacement tactile de l'avion
+            return;
+            
+            // Le reste du code est commenté pour empêcher le déplacement tactile
+            /*
             const touch = e.touches[0];
             const rect = canvas.elt.getBoundingClientRect();
             const touchX = touch.clientX - rect.left;
@@ -598,9 +614,14 @@
                 }
             }
             // Sinon, permettre le défilement normal (ne pas appeler preventDefault())
+            */
         }
 
         function handleTouchMove(e) {
+            // SUR MOBILE : DÉSACTIVER LE DÉPLACEMENT TACTILE
+            return;
+            
+            /*
             // CORRECTION : Vérifier que canvas est défini
             if (!canvas || !canvas.elt) return;
             
@@ -631,13 +652,19 @@
                 lastTouchDistance = currentDistance;
                 e.preventDefault();
             }
+            */
         }
 
         function handleTouchEnd(e) {
+            // SUR MOBILE : DÉSACTIVER LE DÉPLACEMENT TACTILE
+            return;
+            
+            /*
             aircraftMoving = false;
             isDragging = false;
             capPlusPressed = false;
             capMoinsPressed = false;
+            */
         }
 
         function setupButtonEvents() {
@@ -646,8 +673,8 @@
             const capPlusBtn = document.getElementById('capPlus');
             const capMoinsBtn = document.getElementById('capMoins');
             
-            // Boutons de contrôle du cap
-            if (capPlusBtn) {
+            // Boutons de contrôle du cap - SEULEMENT SUR MOBILE
+            if (capPlusBtn && isMobile) {
                 capPlusBtn.addEventListener('click', function() {
                     rose = (rose + 5) % 360;
                 });
@@ -664,7 +691,7 @@
                 });
             }
             
-            if (capMoinsBtn) {
+            if (capMoinsBtn && isMobile) {
                 capMoinsBtn.addEventListener('click', function() {
                     rose = (rose - 5 + 360) % 360;
                 });
