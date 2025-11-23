@@ -19,9 +19,10 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            touch-action: pan-y;
-            overflow-y: auto;
+            touch-action: pan-y; /* Permet le défilement vertical */
+            overflow-y: auto; /* Assure le défilement */
             overflow-x: hidden;
+            /* Suppression de height: 100vh qui peut causer des problèmes */
         }
         h1 {
             color: #333;
@@ -38,6 +39,7 @@
             max-width: 100vw;
             box-sizing: border-box;
             padding: 0;
+            /* Suppression de height: 100vh */
         }
         .instructions {
             background-color: white;
@@ -49,11 +51,6 @@
             box-sizing: border-box;
             text-align: center;
             margin: 0;
-        }
-        .instructions p {
-            margin: 8px 0;
-            font-size: clamp(0.9rem, 2vw, 1rem);
-            line-height: 1.4;
         }
         .consigne {
             background-color: #fff3cd;
@@ -151,7 +148,7 @@
             min-width: 200px;
             max-width: 1000px;
             position: relative;
-            height: 500px;
+            height: 500px; /* Hauteur fixe pour desktop */
             border: 1px solid #ccc;
             background: white;
         }
@@ -190,7 +187,7 @@
                 margin: 8px 10px;
             }
             #canvasContainer {
-                height: 400px;
+                height: 400px; /* Hauteur réduite pour mobile */
                 max-width: 95vw;
             }
             .controls {
@@ -442,7 +439,7 @@
             let canvasWidth, canvasHeight;
             if (isMobile) {
                 canvasWidth = windowWidth * 0.95;
-                canvasHeight = windowHeight * 0.5;
+                canvasHeight = 400; // Hauteur fixe pour mobile
             } else {
                 canvasWidth = 1000;
                 canvasHeight = 500;
@@ -453,11 +450,14 @@
             canvas.style('display', 'block');
             canvas.style('cursor', 'default');
             
-            // Gestion des événements tactiles
+            // Gestion des événements tactiles - plus permissive
             canvas.elt.addEventListener('touchstart', function(e) {
                 if (isInBaliseZone((e.touches[0].clientX - offsetX) / zoomScale, 
                                   (e.touches[0].clientY - offsetY) / zoomScale)) {
-                    e.preventDefault();
+                    // Ne pas empêcher le défilement si on n'est pas en train de déplacer l'avion
+                    if (aircraftMoving) {
+                        e.preventDefault();
+                    }
                 }
             }, { passive: false });
             
@@ -465,6 +465,7 @@
                 if (aircraftMoving) {
                     e.preventDefault();
                 }
+                // Permettre le défilement si on ne déplace pas l'avion
             }, { passive: false });
             
             canvas.elt.addEventListener('gesturestart', function(e) {
@@ -917,7 +918,10 @@
                             touches[1].x, touches[1].y
                         );
                     }
+                    // Empêcher le défilement seulement si on déplace l'avion
+                    event.preventDefault();
                 }
+                // Permettre le défilement si on ne touche pas la zone de l'avion
                 return false;
             }
             return false;
@@ -936,6 +940,8 @@
                         mmx = targetX;
                         mmy = targetY;
                     }
+                    // Empêcher le défilement seulement si on déplace l'avion
+                    event.preventDefault();
                 } else if (touches.length === 2) {
                     let currentDistance = dist(
                         touches[0].x, touches[0].y,
@@ -947,8 +953,10 @@
                     zoomScale = constrain(zoomScale, 0.5, 3.0);
                     
                     lastTouchDistance = currentDistance;
+                    event.preventDefault();
                 }
             }
+            // Permettre le défilement si on ne déplace pas l'avion
             return false;
         }
 
@@ -964,7 +972,7 @@
 
         function windowResized() {
             if (isMobile) {
-                resizeCanvas(windowWidth * 0.95, windowHeight * 0.5);
+                resizeCanvas(windowWidth * 0.95, 400); // Hauteur fixe pour mobile
             } else {
                 resizeCanvas(1000, 500);
             }
