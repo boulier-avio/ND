@@ -160,7 +160,7 @@
         }
         .jeu-reponse-row {
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             justify-content: center;
             align-items: flex-start;
             width: 100vw;
@@ -190,35 +190,23 @@
             touch-action: pan-y;
         }
         #reponsesBox {
-            flex: 1 1 0%;
             background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-            padding: 18px 12px;
-            min-width: 150px;
-            max-width: 220px;
-            font-size: 1.05em;
-            color: #d63c3c;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            margin-top: 30px;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    padding: 18px 12px;
+    width: 95%; /* Largeur adaptée */
+    max-width: 600px; /* Largeur maximale augmentée */
+    font-size: 1.05em;
+    color: #d63c3c;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 0; /* Supprimé le margin-top */
+    text-align: center;
         }
         @media (max-width: 900px) {
-            .jeu-reponse-row {
-                flex-direction: column;
-                align-items: center;
-                gap: 8px;
-            }
-            #reponsesBox {
-                margin-top: 8px;
-                align-items: center;
-                min-width: unset;
-                max-width: 95vw;
-                width: 95vw;
-                font-size: 1em;
-                text-align: center;
-            }
+           
+           
             .consigne {
                 padding: 12px;
                 margin: 8px 10px;
