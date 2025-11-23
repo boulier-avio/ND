@@ -150,17 +150,14 @@
             height: 500px;
             border: 1px solid #ccc;
             background: white;
-            /* CORRECTION : Permettre le défilement à travers */
             touch-action: pan-y;
             overflow: visible;
             -webkit-overflow-scrolling: touch;
-            /* Important pour permettre le défilement */
-            pointer-events: none; /* Désactiver les événements sur le container */
+            pointer-events: none;
         }
-        /* CORRECTION : Réactiver les événements uniquement sur le canvas */
         #canvasContainer canvas {
             pointer-events: auto;
-            touch-action: pan-y; /* Permettre le défilement vertical */
+            touch-action: pan-y;
         }
         #reponsesBox {
             flex: 1 1 0%;
@@ -199,7 +196,6 @@
             #canvasContainer {
                 height: 400px;
                 max-width: 95vw;
-                /* CORRECTION : Assurer le défilement sur mobile */
                 touch-action: pan-y;
             }
             .controls {
@@ -402,6 +398,9 @@
         // Variable pour contrôler le déplacement de l'avion
         let aircraftMoving = false;
 
+        // CORRECTION : Déclarer canvas en variable globale
+        let canvas;
+
         function preload() {
             // Chargement des images sans messages console
             imgNDcadre = loadImage('NDcadre.png', imageLoaded, imageLoadError);
@@ -444,12 +443,13 @@
                 canvasHeight = 500;
             }
             
-            let canvas = createCanvas(canvasWidth, canvasHeight);
+            // CORRECTION : Assigner à la variable globale canvas
+            canvas = createCanvas(canvasWidth, canvasHeight);
             canvas.parent('canvasContainer');
             canvas.style('display', 'block');
             canvas.style('cursor', 'default');
             
-            // CORRECTION : Configuration du canvas pour permettre le défilement
+            // Configuration du canvas pour permettre le défilement
             canvas.elt.style.touchAction = 'pan-y';
             canvas.elt.style.webkitUserSelect = 'none';
             canvas.elt.style.userSelect = 'none';
@@ -473,6 +473,9 @@
         }
 
         function handleTouchStart(e) {
+            // CORRECTION : Vérifier que canvas est défini
+            if (!canvas || !canvas.elt) return;
+            
             const touch = e.touches[0];
             const rect = canvas.elt.getBoundingClientRect();
             const touchX = touch.clientX - rect.left;
@@ -503,6 +506,9 @@
         }
 
         function handleTouchMove(e) {
+            // CORRECTION : Vérifier que canvas est défini
+            if (!canvas || !canvas.elt) return;
+            
             if (!aircraftMoving) {
                 return; // Permettre le défilement normal
             }
