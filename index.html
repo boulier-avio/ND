@@ -21,7 +21,8 @@
             min-height: 100vh;
             touch-action: pan-y;
             overflow-y: auto;
-            overflow-x: visible;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch; /* Important pour iOS */
         }
         h1 {
             color: #333;
@@ -149,6 +150,8 @@
             height: 500px;
             border: 1px solid #ccc;
             background: white;
+            /* Permettre le défilement à travers le canvas */
+            touch-action: pan-y;
         }
         #reponsesBox {
             flex: 1 1 0%;
@@ -187,6 +190,7 @@
             #canvasContainer {
                 height: 400px;
                 max-width: 95vw;
+                touch-action: pan-y; /* Important pour mobile */
             }
             .controls {
                 flex-direction: column;
@@ -444,32 +448,20 @@
             canvas.style('display', 'block');
             canvas.style('cursor', 'default');
             
-            // Gestion des événements tactiles
-            canvas.elt.addEventListener('touchstart', function(e) {
-                if (isInBaliseZone((e.touches[0].clientX - offsetX) / zoomScale, 
-                                  (e.touches[0].clientY - offsetY) / zoomScale)) {
-                    if (aircraftMoving) {
-                        e.preventDefault();
-                    }
-                }
-            }, { passive: false });
+            // Gestion des événements tactiles - PLUS PERMISSIVE
+            canvas.elt.addEventListener('touchstart', handleTouchStart, { passive: false });
+            canvas.elt.addEventListener('touchmove', handleTouchMove, { passive: false });
+            canvas.elt.addEventListener('touchend', handleTouchEnd);
             
-            canvas.elt.addEventListener('touchmove', function(e) {
-                if (aircraftMoving) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-            
+            // Pour les gestes de zoom (plus permissif)
             canvas.elt.addEventListener('gesturestart', function(e) {
-                e.preventDefault();
+                if (aircraftMoving) e.preventDefault();
             });
-            
             canvas.elt.addEventListener('gesturechange', function(e) {
-                e.preventDefault();
+                if (aircraftMoving) e.preventDefault();
             });
-            
             canvas.elt.addEventListener('gestureend', function(e) {
-                e.preventDefault();
+                if (aircraftMoving) e.preventDefault();
             });
             
             baliseLH = createVector(0, -10);
@@ -485,6 +477,77 @@
             let centerY = (min(183, 383) + max(183, 383)) / 2;
             mmx = centerX * zoomScale + offsetX;
             mmy = centerY * zoomScale + offsetY;
+        }
+
+        // Nouvelles fonctions de gestion des événements tactiles
+        function handleTouchStart(e) {
+            const touch = e.touches[0];
+            const rect = canvas.elt.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            const touchY = touch.clientY - rect.top;
+            
+            let adjustedTouchX = (touchX - offsetX) / zoomScale;
+            let adjustedTouchY = (touchY - offsetY) / zoomScale;
+            
+            if (isInBaliseZone(adjustedTouchX, adjustedTouchY)) {
+                aircraftMoving = true;
+                mmx = touchX;
+                mmy = touchY;
+                
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    lastTouchX = touchX;
+                    lastTouchY = touchY;
+                } else if (e.touches.length === 2) {
+                    lastTouchDistance = dist(
+                        e.touches[0].clientX, e.touches[0].clientY,
+                        e.touches[1].clientX, e.touches[1].clientY
+                    );
+                }
+                // Empêcher le défilement SEULEMENT si on touche la zone de l'avion
+                e.preventDefault();
+            }
+            // Sinon, laisser le défilement se faire normalement
+        }
+
+        function handleTouchMove(e) {
+            if (aircraftMoving) {
+                const touch = e.touches[0];
+                const rect = canvas.elt.getBoundingClientRect();
+                const touchX = touch.clientX - rect.left;
+                const touchY = touch.clientY - rect.top;
+                
+                if (e.touches.length === 1 && isDragging) {
+                    let adjustedTargetX = (touchX - offsetX) / zoomScale;
+                    let adjustedTargetY = (touchY - offsetY) / zoomScale;
+                    
+                    if (isInBaliseZone(adjustedTargetX, adjustedTargetY)) {
+                        mmx = touchX;
+                        mmy = touchY;
+                    }
+                    e.preventDefault();
+                } else if (e.touches.length === 2) {
+                    let currentDistance = dist(
+                        e.touches[0].clientX, e.touches[0].clientY,
+                        e.touches[1].clientX, e.touches[1].clientY
+                    );
+                    
+                    let zoomFactor = currentDistance / lastTouchDistance;
+                    zoomScale *= zoomFactor;
+                    zoomScale = constrain(zoomScale, 0.5, 3.0);
+                    
+                    lastTouchDistance = currentDistance;
+                    e.preventDefault();
+                }
+            }
+            // Si aircraftMoving est false, le défilement est autorisé
+        }
+
+        function handleTouchEnd(e) {
+            aircraftMoving = false;
+            isDragging = false;
+            capPlusPressed = false;
+            capMoinsPressed = false;
         }
 
         function setupButtonEvents() {
@@ -887,73 +950,17 @@
         }
 
         function touchStarted(event) {
-            if (isMobile) {
-                const touchX = event.touches[0].clientX;
-                const touchY = event.touches[0].clientY;
-                
-                let adjustedTouchX = (touchX - offsetX) / zoomScale;
-                let adjustedTouchY = (touchY - offsetY) / zoomScale;
-                
-                if (isInBaliseZone(adjustedTouchX, adjustedTouchY)) {
-                    aircraftMoving = true;
-                    mmx = touchX;
-                    mmy = touchY;
-                    
-                    if (touches.length === 1) {
-                        isDragging = true;
-                        lastTouchX = touchX;
-                        lastTouchY = touchY;
-                    } else if (touches.length === 2) {
-                        lastTouchDistance = dist(
-                            touches[0].x, touches[0].y,
-                            touches[1].x, touches[1].y
-                        );
-                    }
-                    event.preventDefault();
-                }
-                return false;
-            }
+            // Cette fonction est maintenant remplacée par handleTouchStart
             return false;
         }
 
         function touchMoved(event) {
-            if (isMobile && aircraftMoving) {
-                if (touches.length === 1 && isDragging) {
-                    let targetX = touches[0].x;
-                    let targetY = touches[0].y;
-                    
-                    let adjustedTargetX = (targetX - offsetX) / zoomScale;
-                    let adjustedTargetY = (targetY - offsetY) / zoomScale;
-                    
-                    if (isInBaliseZone(adjustedTargetX, adjustedTargetY)) {
-                        mmx = targetX;
-                        mmy = targetY;
-                    }
-                    event.preventDefault();
-                } else if (touches.length === 2) {
-                    let currentDistance = dist(
-                        touches[0].x, touches[0].y,
-                        touches[1].x, touches[1].y
-                    );
-                    
-                    let zoomFactor = currentDistance / lastTouchDistance;
-                    zoomScale *= zoomFactor;
-                    zoomScale = constrain(zoomScale, 0.5, 3.0);
-                    
-                    lastTouchDistance = currentDistance;
-                    event.preventDefault();
-                }
-            }
+            // Cette fonction est maintenant remplacée par handleTouchMove
             return false;
         }
 
         function touchEnded() {
-            if (isMobile) {
-                aircraftMoving = false;
-                if (touches.length === 0) {
-                    isDragging = false;
-                }
-            }
+            // Cette fonction est maintenant remplacée par handleTouchEnd
             return false;
         }
 
