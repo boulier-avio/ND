@@ -21,9 +21,8 @@
             min-height: 100vh;
             touch-action: pan-y;
             overflow-y: auto;
-            overflow-x: visible;
+            overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
-            /* Empêcher le zoom et le mode paysage */
             touch-action: pan-y;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
@@ -65,18 +64,18 @@
             flex-direction: column;
             align-items: center;
             gap: 15px;
-            width: 100vw;
+            width: 100%;
             max-width: 100vw;
             box-sizing: border-box;
-            padding: 0;
+            padding: 10px;
         }
         .instructions {
             background-color: white;
             padding: 12px 0;
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            width: 100vw;
-            max-width: 100vw;
+            width: 100%;
+            max-width: 100%;
             box-sizing: border-box;
             text-align: center;
             margin: 0;
@@ -88,8 +87,7 @@
             padding: 15px;
             margin: 10px 0;
             text-align: left;
-            width: 100vw;
-            max-width: 100vw;
+            width: 100%;
             max-width: 900px;
         }
         .consigne h3 {
@@ -118,8 +116,8 @@
             gap: 10px;
             justify-content: center;
             align-items: center;
-            width: 100vw;
-            max-width: 100vw;
+            width: 100%;
+            max-width: 100%;
             box-sizing: border-box;
             margin: 0;
         }
@@ -164,51 +162,56 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-             width: 100vw;
-            max-width: 100vw;
+            width: 100%;
+            max-width: 100%;
             box-sizing: border-box;
-           
+            gap: 15px;
             margin: 0 auto;
         }
         #canvasContainer {
-            flex: 3 1 0%;
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 100vw;
-            max-width: 100vw;
+            width: 100%;
+            max-width: 100%;
             position: relative;
-            
+            height: 50vh;
+            min-height: 300px;
             border: 1px solid #ccc;
             background: white;
             touch-action: pan-y;
-            overflow: visible;
+            overflow: hidden;
             -webkit-overflow-scrolling: touch;
         }
         #canvasContainer canvas {
             pointer-events: auto;
             touch-action: pan-y;
+            width: 100% !important;
+            height: 100% !important;
         }
         #reponsesBox {
             background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    padding: 18px 12px;
-   width: 100vw;
-            max-width: 100vw;
-    font-size: 1.05em;
-    color: #d63c3c;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 0; /* Supprimé le margin-top */
-    text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            width: 100%;
+            max-width: 100%;
+            font-size: 1.05em;
+            color: #d63c3c;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
             box-sizing: border-box;
         }
         /* Masquer les boutons cap sur ordinateur */
         @media (min-width: 901px) {
             .mobile-only {
                 display: none !important;
+            }
+            #canvasContainer {
+                height: 500px;
+                max-width: 1000px;
             }
         }
         @media (max-width: 900px) {
@@ -218,21 +221,19 @@
            
             .consigne {
                 padding: 12px;
-                margin: 8px 10px;
+                margin: 8px 0;
             }
             #canvasContainer {
-                height: 400px;
-                width: 95vw;
-                max-width: 95vw;
-                touch-action: pan-y;
+                height: 50vh;
+                min-height: 350px;
             }
             .controls {
                 flex-direction: column;
                 align-items: center;
             }
             button {
-                max-width: 95vw;
-                width: 95vw;
+                max-width: 100%;
+                width: 100%;
             }
             .cap-controls {
                 justify-content: center;
@@ -243,20 +244,18 @@
         @media (max-width: 768px) and (orientation: portrait) {
             .container {
                 gap: 10px;
+                padding: 5px;
             }
             .consigne {
                 padding: 10px;
-                margin: 5px 10px;
+                margin: 5px 0;
             }
             #canvasContainer {
-                height: 60vh; /* Utiliser 60% de la hauteur de l'écran */
-                max-width: 95vw;
-                width: 95vw;
-                min-height: 350px;
+                height: 50vh;
+                min-height: 300px;
             }
             .jeu-reponse-row {
-                width: 95vw;
-                gap: 5px;
+                gap: 10px;
             }
             .controls {
                 gap: 8px;
@@ -469,14 +468,12 @@
         // Variable pour contrôler le déplacement de l'avion
         let aircraftMoving = false;
 
-        // CORRECTION : Déclarer canvas en variable globale
         let canvas;
 
         // Variables pour la gestion de l'orientation
         let isPortrait = true;
 
         function preload() {
-            // Chargement des images sans messages console
             imgNDcadre = loadImage('NDcadre.png', imageLoaded, imageLoadError);
             imgNDmaquette = loadImage('NDmaquette.png', imageLoaded, imageLoadError);
             imgNDrose = loadImage('NDrose.png', imageLoaded, imageLoadError);
@@ -508,35 +505,28 @@
                       ('ontouchstart' in window) || 
                       (navigator.maxTouchPoints > 0);
             
-            // Vérifier l'orientation initiale
             checkOrientation();
             
-            // Surveiller les changements d'orientation
             window.addEventListener('orientationchange', checkOrientation);
             window.addEventListener('resize', checkOrientation);
             
-            let canvasWidth, canvasHeight;
-            if (isMobile) {
-                // Utiliser presque toute la largeur mais adapter la hauteur
-                canvasWidth = windowWidth * 0.95;
-                canvasHeight = windowHeight * 0.5; // 50% de la hauteur de l'écran
-            } else {
-                canvasWidth = 1100;
-                canvasHeight = 500;
-            }
+            // Taille du canvas adaptative
+            const canvasContainer = document.getElementById('canvasContainer');
+            const containerRect = canvasContainer.getBoundingClientRect();
             
-            // CORRECTION : Assigner à la variable globale canvas
+            let canvasWidth = containerRect.width;
+            let canvasHeight = containerRect.height;
+            
             canvas = createCanvas(canvasWidth, canvasHeight);
             canvas.parent('canvasContainer');
             canvas.style('display', 'block');
             canvas.style('cursor', 'default');
             
-            // Configuration du canvas pour permettre le défilement
             canvas.elt.style.touchAction = 'pan-y';
             canvas.elt.style.webkitUserSelect = 'none';
             canvas.elt.style.userSelect = 'none';
             
-            // Gestion des événements tactiles - RÉACTIVÉS
+            // Gestion des événements tactiles
             canvas.elt.addEventListener('touchstart', handleTouchStart, { passive: false });
             canvas.elt.addEventListener('touchmove', handleTouchMove, { passive: false });
             canvas.elt.addEventListener('touchend', handleTouchEnd);
@@ -553,9 +543,8 @@
             mmx = width / 2;
             mmy = height / 2;
             
-            // Ajuster le zoom initial pour mobile
             if (isMobile) {
-                zoomScale = 0.8; // Zoom réduit pour voir plus de contenu
+                zoomScale = 0.8;
             }
         }
 
@@ -565,11 +554,9 @@
             const container = document.querySelector('.container');
             
             if (isMobile && !isPortrait) {
-                // Mode paysage - afficher l'avertissement
                 if (landscapeWarning) landscapeWarning.style.display = 'flex';
                 if (container) container.style.display = 'none';
             } else {
-                // Mode portrait - afficher l'application
                 if (landscapeWarning) landscapeWarning.style.display = 'none';
                 if (container) container.style.display = 'flex';
             }
@@ -583,26 +570,23 @@
             const touchX = touch.clientX - rect.left;
             const touchY = touch.clientY - rect.top;
             
-            // Vérifier si on touche près de l'avion pour le déplacement
-            const aircraftDistance = dist(touchX, touchY, mmx, mmy);
-            if (aircraftDistance < 80) { // Zone plus large pour faciliter le toucher
-                aircraftMoving = true;
-                e.preventDefault();
+            // Permettre le déplacement de l'avion depuis n'importe où sur le canvas
+            aircraftMoving = true;
+            e.preventDefault();
+            
+            if (e.touches.length === 1) {
+                isDragging = true;
+                lastTouchX = touchX;
+                lastTouchY = touchY;
                 
-                if (e.touches.length === 1) {
-                    isDragging = true;
-                    lastTouchX = touchX;
-                    lastTouchY = touchY;
-                    
-                    // Déplacer l'avion directement au point de toucher
-                    mmx = touchX;
-                    mmy = touchY;
-                } else if (e.touches.length === 2) {
-                    lastTouchDistance = dist(
-                        e.touches[0].clientX, e.touches[0].clientY,
-                        e.touches[1].clientX, e.touches[1].clientY
-                    );
-                }
+                // Déplacer l'avion directement au point de toucher
+                mmx = touchX;
+                mmy = touchY;
+            } else if (e.touches.length === 2) {
+                lastTouchDistance = dist(
+                    e.touches[0].clientX, e.touches[0].clientY,
+                    e.touches[1].clientX, e.touches[1].clientY
+                );
             }
         }
 
@@ -610,7 +594,7 @@
             if (!canvas || !canvas.elt) return;
             
             if (!aircraftMoving) {
-                return; // Permettre le défilement normal
+                return;
             }
             
             const touch = e.touches[0];
@@ -651,7 +635,6 @@
             const capPlusBtn = document.getElementById('capPlus');
             const capMoinsBtn = document.getElementById('capMoins');
             
-            // Boutons de contrôle du cap - SEULEMENT SUR MOBILE
             if (capPlusBtn && isMobile) {
                 capPlusBtn.addEventListener('click', function() {
                     rose = (rose + 5) % 360;
@@ -664,9 +647,6 @@
                     e.preventDefault();
                     capPlusPressed = false;
                 }, {passive: false});
-                capPlusBtn.addEventListener('touchcancel', function(e) {
-                    capPlusPressed = false;
-                });
             }
             
             if (capMoinsBtn && isMobile) {
@@ -681,35 +661,24 @@
                     e.preventDefault();
                     capMoinsPressed = false;
                 }, {passive: false});
-                capMoinsBtn.addEventListener('touchcancel', function(e) {
-                    capMoinsPressed = false;
-                });
             }
             
             if (randomBothBtn) {
                 randomBothBtn.addEventListener('click', randomBoth);
-                randomBothBtn.addEventListener('touchend', function(e) {e.preventDefault(); randomBoth();});
             }
             
             if (toggleReponseBtn) {
                 toggleReponseBtn.addEventListener('click', toggleReponse);
-                toggleReponseBtn.addEventListener('touchend', function(e) {e.preventDefault(); toggleReponse();});
             }
             
-            const showTermsBtn = document.getElementById('showTermsBtn');
-            const showButtonsBtn = document.getElementById('showButtonsBtn');
+            // Gestion des modales
+            document.getElementById('showTermsBtn').addEventListener('click', function() {
+                document.getElementById('termsModal').classList.add('active');
+            });
             
-            if (showTermsBtn) {
-                showTermsBtn.addEventListener('click', function() {
-                    document.getElementById('termsModal').classList.add('active');
-                });
-            }
-            
-            if (showButtonsBtn) {
-                showButtonsBtn.addEventListener('click', function() {
-                    document.getElementById('buttonsModal').classList.add('active');
-                });
-            }
+            document.getElementById('showButtonsBtn').addEventListener('click', function() {
+                document.getElementById('buttonsModal').classList.add('active');
+            });
             
             document.querySelectorAll('.closeBtn').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -742,7 +711,6 @@
             let NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2;
             
             if (isMobile) {
-                // Adaptation pour mobile - positions relatives
                 NDX = width * 0.35;
                 NDY = height * 0.4;
                 NDBX1 = width * 0.75;
@@ -750,12 +718,12 @@
                 NDBX2 = width * 0.75;
                 NDBY2 = height * 0.6;
             } else {
-                NDX = 200;
-                NDY = 183;
-                NDBX1 = 600;
-                NDBY1 = 183;
-                NDBX2 = 850;
-                NDBY2 = 383;
+                NDX = width * 0.2;
+                NDY = height * 0.4;
+                NDBX1 = width * 0.6;
+                NDBY1 = height * 0.3;
+                NDBX2 = width * 0.8;
+                NDBY2 = height * 0.6;
             }
 
             if (mmx === undefined || mmy === undefined) {
@@ -765,14 +733,13 @@
 
             let cadreSize, roseSize, traicapSize;
             if (isMobile) {
-                // Taille réduite pour mobile pour mieux voir l'ensemble
                 cadreSize = min(width, height) * 0.35;
                 roseSize = min(width, height) * 0.3;
                 traicapSize = min(width, height) * 0.35;
             } else {
-                cadreSize = 368;
-                roseSize = 368;
-                traicapSize = 368;
+                cadreSize = min(width, height) * 0.4;
+                roseSize = min(width, height) * 0.35;
+                traicapSize = min(width, height) * 0.4;
             }
 
             drawMainElements(NDX, NDY, cadreSize, roseSize, traicapSize, NDBX1, NDBY1, NDBX2, NDBY2);
@@ -785,7 +752,6 @@
         }
 
         function drawBaliseNumbers(NDBX1, NDBY1, NDBX2, NDBY2) {
-            // Numéros en ROUGE sur les balises
             fill(255, 0, 0);
             textSize(isMobile ? 14 : 20);
             textAlign(CENTER, CENTER);
@@ -812,7 +778,6 @@
 
         function updateAircraftPosition() {
             if (!isMobile && leftMousePressed) {
-                // Déplacer l'avion librement sans restriction de zone
                 mmx = mouseX;
                 mmy = mouseY;
             }
@@ -856,29 +821,24 @@
         }
 
         function drawFallbackGraphics(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2) {
-            // Cadre principal
             stroke(0);
             strokeWeight(2);
             noFill();
             rect(NDX, NDY, cadreSize, cadreSize);
             
-            // Rose des vents
             stroke(100);
             strokeWeight(1);
             noFill();
             circle(NDX, NDY, roseSize);
             
-            // Indicateur de cap
             fill(100);
             noStroke();
             rect(NDX-15, NDY, 30, 10);
             
-            // Balises
             fill(255, 0, 0);
             circle(NDBX1, NDBY1, 20);
             circle(NDBX2, NDBY2, 20);
             
-            // Flèches
             stroke(255, 0, 0);
             strokeWeight(3);
             push();
@@ -973,7 +933,6 @@
                     lastUpdateTime = millis();
                     return false;
                 } else if (mouseButton === LEFT) {
-                    // Déplacer l'avion librement sans vérification de zone
                     leftMousePressed = true;
                     mmx = mouseX;
                     mmy = mouseY;
@@ -1002,30 +961,16 @@
             }
         }
 
-        function touchStarted(event) {
-            return false;
-        }
-
-        function touchMoved(event) {
-            return false;
-        }
-
-        function touchEnded() {
-            return false;
-        }
-
         function windowResized() {
             checkOrientation();
             
-            if (isMobile && isPortrait) {
-                resizeCanvas(windowWidth * 0.95, windowHeight * 0.5);
-            } else if (!isMobile) {
-                resizeCanvas(1000, 500);
-            }
+            const canvasContainer = document.getElementById('canvasContainer');
+            const containerRect = canvasContainer.getBoundingClientRect();
+            
+            resizeCanvas(containerRect.width, containerRect.height);
         }
 
         function randomPosition() {
-            // Position aléatoire dans tout le canvas
             let randomX = random(50, width - 50);
             let randomY = random(50, height - 50);
             
@@ -1047,7 +992,6 @@
             updateAnswers();
         }
 
-        // Empêcher le menu contextuel uniquement sur le canvas
         document.addEventListener('contextmenu', function(e) {
             if (e.target.tagName === 'CANVAS') {
                 e.preventDefault();
@@ -1055,7 +999,6 @@
             }
         });
 
-        // Empêcher le zoom avec pincement
         document.addEventListener('gesturestart', function(e) {
             e.preventDefault();
         });
@@ -1068,5 +1011,4 @@
             e.preventDefault();
         });
     </script>
-</body>
-</html>
+</body
