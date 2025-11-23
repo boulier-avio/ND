@@ -496,7 +496,7 @@
                 aircraftMoving = true;
                 mmx = touchX;
                 mmy = touchY;
-                e.preventDefault();
+               
                 
                 if (e.touches.length === 1) {
                     isDragging = true;
@@ -520,7 +520,7 @@
                 const rect = canvas.elt.getBoundingClientRect();
                 const touchX = touch.clientX - rect.left;
                 const touchY = touch.clientY - rect.top;
-                e.preventDefault();
+                
                 
                 if (e.touches.length === 1 && isDragging) {
                     let adjustedTargetX = (touchX - offsetX) / zoomScale;
