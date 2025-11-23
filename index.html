@@ -297,12 +297,12 @@
         <div class="consigne">
             <h3>📋 Consigne :</h3>
             <p><strong>Détermine la position de l'avion, son cap, le gisement ainsi que les relèvements QDR et QDM à partir de l'instrument.</strong></p>
-            <p>Déplacez l'avion dans la zone bleue et modifiez son cap pour observer les changements dans les mesures.</p>
+            <p>Déplacez l'avion librement sur l'écran et modifiez son cap pour observer les changements dans les mesures.</p>
             
             <div class="astuce">
                 <strong>Astuce :</strong><br>
                 • Sur ordinateur : clic gauche pour déplacer l'avion, clic droit pour modifier le cap<br>
-                • Sur mobile : utilisez les boutons + et - pour modifier le cap, et touchez la zone bleue pour déplacer l'avion<br>
+                • Sur mobile : utilisez les boutons + et - pour modifier le cap, et touchez l'écran pour déplacer l'avion<br>
                 • La flèche double indique le QDM vers la balise de droite (NDB 2)<br>
                 • La flèche simple indique le QDM vers la balise de gauche (NDB 1)
             </div>
@@ -394,15 +394,6 @@
         // Variable pour contrôler le déplacement de l'avion
         let aircraftMoving = false;
 
-        // Variables pour la zone de délimitation des balises
-        let baliseZone = {
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
-            padding: 100
-        };
-
         function preload() {
             // Chargement des images sans messages console
             imgNDcadre = loadImage('NDcadre.png', imageLoaded, imageLoadError);
@@ -450,21 +441,10 @@
             canvas.style('display', 'block');
             canvas.style('cursor', 'default');
             
-            // Gestion des événements tactiles - PLUS PERMISSIVE
+            // Gestion des événements tactiles
             canvas.elt.addEventListener('touchstart', handleTouchStart, { passive: false });
             canvas.elt.addEventListener('touchmove', handleTouchMove, { passive: false });
             canvas.elt.addEventListener('touchend', handleTouchEnd);
-            
-            // Pour les gestes de zoom (plus permissif)
-            canvas.elt.addEventListener('gesturestart', function(e) {
-                if (aircraftMoving) e.preventDefault();
-            });
-            canvas.elt.addEventListener('gesturechange', function(e) {
-                if (aircraftMoving) e.preventDefault();
-            });
-            canvas.elt.addEventListener('gestureend', function(e) {
-                if (aircraftMoving) e.preventDefault();
-            });
             
             baliseLH = createVector(0, -10);
             baliseRH = createVector(0, -10);
@@ -474,46 +454,36 @@
             
             setupButtonEvents();
             
-            // Position initiale de l'avion
-            let centerX = (min(600, 850) + max(600, 850)) / 2;
-            let centerY = (min(183, 383) + max(183, 383)) / 2;
-            mmx = centerX * zoomScale + offsetX;
-            mmy = centerY * zoomScale + offsetY;
+            // Position initiale de l'avion au centre
+            mmx = width / 2;
+            mmy = height / 2;
         }
 
-        // Nouvelles fonctions de gestion des événements tactiles
         function handleTouchStart(e) {
             const touch = e.touches[0];
             const rect = canvas.elt.getBoundingClientRect();
             const touchX = touch.clientX - rect.left;
             const touchY = touch.clientY - rect.top;
             
-            let adjustedTouchX = (touchX - offsetX) / zoomScale;
-            let adjustedTouchY = (touchY - offsetY) / zoomScale;
+            // Toujours permettre le déplacement de l'avion
+            aircraftMoving = true;
+            e.preventDefault();
             
-           if (isInBaliseZone(adjustedTouchX, adjustedTouchY)) {
-    aircraftMoving = true;
-    e.preventDefault();  // empêcher le scroll SEULEMENT ici
-} else {
-    aircraftMoving = false;  // scroll autorisé
-}
-               
+            if (e.touches.length === 1) {
+                isDragging = true;
+                lastTouchX = touchX;
+                lastTouchY = touchY;
                 
-                if (e.touches.length === 1) {
-                    isDragging = true;
-                    lastTouchX = touchX;
-                    lastTouchY = touchY;
-                } else if (e.touches.length === 2) {
-                    lastTouchDistance = dist(
-                        e.touches[0].clientX, e.touches[0].clientY,
-                        e.touches[1].clientX, e.touches[1].clientY
-                    );
-                }
-                // Empêcher le défilement SEULEMENT si on touche la zone de l'avion
-                
+                // Déplacer l'avion directement au point de toucher
+                mmx = touchX;
+                mmy = touchY;
+            } else if (e.touches.length === 2) {
+                lastTouchDistance = dist(
+                    e.touches[0].clientX, e.touches[0].clientY,
+                    e.touches[1].clientX, e.touches[1].clientY
+                );
             }
-            // Sinon, laisser le défilement se faire normalement
-        
+        }
 
         function handleTouchMove(e) {
             if (aircraftMoving) {
@@ -521,16 +491,11 @@
                 const rect = canvas.elt.getBoundingClientRect();
                 const touchX = touch.clientX - rect.left;
                 const touchY = touch.clientY - rect.top;
-              if (!aircraftMoving) return;  
                 
                 if (e.touches.length === 1 && isDragging) {
-                    let adjustedTargetX = (touchX - offsetX) / zoomScale;
-                    let adjustedTargetY = (touchY - offsetY) / zoomScale;
-                    
-                    if (isInBaliseZone(adjustedTargetX, adjustedTargetY)) {
-                        mmx = touchX;
-                        mmy = touchY;
-                    }
+                    // Déplacer l'avion librement
+                    mmx = touchX;
+                    mmy = touchY;
                     e.preventDefault();
                 } else if (e.touches.length === 2) {
                     let currentDistance = dist(
@@ -543,10 +508,9 @@
                     zoomScale = constrain(zoomScale, 0.5, 3.0);
                     
                     lastTouchDistance = currentDistance;
-                    
+                    e.preventDefault();
                 }
             }
-            // Si aircraftMoving est false, le défilement est autorisé
         }
 
         function handleTouchEnd(e) {
@@ -662,14 +626,9 @@
                 NDBY2 = 383;
             }
 
-            calculateBaliseZone(NDBX1, NDBY1, NDBX2, NDBY2);
-            drawBaliseZone();
-
             if (mmx === undefined || mmy === undefined) {
-                let centerX = baliseZone.x + baliseZone.width / 2;
-                let centerY = baliseZone.y + baliseZone.height / 2;
-                mmx = centerX * zoomScale + offsetX;
-                mmy = centerY * zoomScale + offsetY;
+                mmx = width / 2;
+                mmy = height / 2;
             }
 
             let cadreSize, roseSize, traicapSize;
@@ -704,42 +663,6 @@
             textStyle(NORMAL);
         }
 
-        function calculateBaliseZone(NDBX1, NDBY1, NDBX2, NDBY2) {
-            const minX = min(NDBX1, NDBX2) - baliseZone.padding;
-            const maxX = max(NDBX1, NDBX2) + baliseZone.padding;
-            const minY = min(NDBY1, NDBY2) - baliseZone.padding;
-            const maxY = max(NDBY1, NDBY2) + baliseZone.padding;
-            
-            baliseZone.x = minX;
-            baliseZone.y = minY;
-            baliseZone.width = maxX - minX;
-            baliseZone.height = maxY - minY;
-        }
-
-        function drawBaliseZone() {
-            stroke(0, 100, 255, 150);
-            strokeWeight(3);
-            noFill();
-            rect(baliseZone.x + baliseZone.width/2, baliseZone.y + baliseZone.height/2, 
-                 baliseZone.width, baliseZone.height);
-            noStroke();
-            
-            fill(0, 100, 255);
-            textSize(isMobile ? 10 : 12);
-            textAlign(CENTER);
-            text("Zone de déplacement de l'avion", 
-                 baliseZone.x + baliseZone.width/2, 
-                 baliseZone.y - 15);
-            textAlign(LEFT);
-        }
-
-        function isInBaliseZone(x, y) {
-            return x >= baliseZone.x && 
-                   x <= baliseZone.x + baliseZone.width && 
-                   y >= baliseZone.y && 
-                   y <= baliseZone.y + baliseZone.height;
-        }
-
         function updateCapContinuous() {
             let currentTime = millis();
             if (currentTime - lastUpdateTime > CAP_CHANGE_INTERVAL) {
@@ -756,16 +679,9 @@
 
         function updateAircraftPosition() {
             if (!isMobile && leftMousePressed) {
-                let targetX = mouseX;
-                let targetY = mouseY;
-                
-                let adjustedTargetX = (targetX - offsetX) / zoomScale;
-                let adjustedTargetY = (targetY - offsetY) / zoomScale;
-                
-                if (isInBaliseZone(adjustedTargetX, adjustedTargetY)) {
-                    mmx = targetX;
-                    mmy = targetY;
-                }
+                // Déplacer l'avion librement sans restriction de zone
+                mmx = mouseX;
+                mmy = mouseY;
             }
         }
 
@@ -924,12 +840,10 @@
                     lastUpdateTime = millis();
                     return false;
                 } else if (mouseButton === LEFT) {
-                    let adjustedMouseX = (mouseX - offsetX) / zoomScale;
-                    let adjustedMouseY = (mouseY - offsetY) / zoomScale;
-                    
-                    if (isInBaliseZone(adjustedMouseX, adjustedMouseY)) {
-                        leftMousePressed = true;
-                    }
+                    // Déplacer l'avion librement sans vérification de zone
+                    leftMousePressed = true;
+                    mmx = mouseX;
+                    mmy = mouseY;
                     return false;
                 }
             }
@@ -956,17 +870,14 @@
         }
 
         function touchStarted(event) {
-            // Cette fonction est maintenant remplacée par handleTouchStart
             return false;
         }
 
         function touchMoved(event) {
-            // Cette fonction est maintenant remplacée par handleTouchMove
             return false;
         }
 
         function touchEnded() {
-            // Cette fonction est maintenant remplacée par handleTouchEnd
             return false;
         }
 
@@ -979,14 +890,12 @@
         }
 
         function randomPosition() {
-            let centerX = baliseZone.x + baliseZone.width / 2;
-            let centerY = baliseZone.y + baliseZone.height / 2;
+            // Position aléatoire dans tout le canvas
+            let randomX = random(50, width - 50);
+            let randomY = random(50, height - 50);
             
-            let randomX = random(baliseZone.x, baliseZone.x + baliseZone.width);
-            let randomY = random(baliseZone.y, baliseZone.y + baliseZone.height);
-            
-            mmx = randomX * zoomScale + offsetX;
-            mmy = randomY * zoomScale + offsetY;
+            mmx = randomX;
+            mmy = randomY;
         }
 
         function randomCap() {
