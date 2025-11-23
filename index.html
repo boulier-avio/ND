@@ -375,7 +375,7 @@
             <div class="astuce">
                 <strong>Astuce :</strong><br>
                 • Sur ordinateur : clic gauche pour déplacer l'avion, clic droit pour modifier le cap<br>
-                • Sur mobile : utilisez les boutons + et - pour modifier le cap, et touchez l'écran pour déplacer l'avion<br>
+                • Sur mobile : utilisez les boutons + et - pour modifier le cap, et le pincement pour zoomer<br>
                 • La flèche double indique le QDM vers la balise de droite (NDB 2)<br>
                 • La flèche simple indique le QDM vers la balise de gauche (NDB 1)
             </div>
@@ -465,7 +465,7 @@
         let lastTouchX, lastTouchY;
         let lastTouchDistance = 0;
 
-        // Variable pour contrôler le déplacement de l'avion
+        // Variable pour contrôler le déplacement de l'avion (désactivé sur mobile)
         let aircraftMoving = false;
 
         let canvas;
@@ -526,7 +526,7 @@
             canvas.elt.style.webkitUserSelect = 'none';
             canvas.elt.style.userSelect = 'none';
             
-            // Gestion des événements tactiles
+            // Gestion des événements tactiles - seulement pour le zoom
             canvas.elt.addEventListener('touchstart', handleTouchStart, { passive: false });
             canvas.elt.addEventListener('touchmove', handleTouchMove, { passive: false });
             canvas.elt.addEventListener('touchend', handleTouchEnd);
@@ -565,66 +565,98 @@
         function handleTouchStart(e) {
             if (!canvas || !canvas.elt) return;
             
-            const touch = e.touches[0];
-            const rect = canvas.elt.getBoundingClientRect();
-            const touchX = touch.clientX - rect.left;
-            const touchY = touch.clientY - rect.top;
-            
-            // Permettre le déplacement de l'avion depuis n'importe où sur le canvas
-            aircraftMoving = true;
-            e.preventDefault();
-            
-            if (e.touches.length === 1) {
-                isDragging = true;
-                lastTouchX = touchX;
-                lastTouchY = touchY;
+            // Sur mobile, on ne permet que le zoom, pas le déplacement de l'avion
+            if (isMobile) {
+                if (e.touches.length === 2) {
+                    // Zoom à deux doigts
+                    lastTouchDistance = dist(
+                        e.touches[0].clientX, e.touches[0].clientY,
+                        e.touches[1].clientX, e.touches[1].clientY
+                    );
+                    e.preventDefault();
+                }
+                // On ignore les touches simples pour éviter le déplacement de l'avion
+            } else {
+                // Sur ordinateur, on garde le comportement original
+                const touch = e.touches[0];
+                const rect = canvas.elt.getBoundingClientRect();
+                const touchX = touch.clientX - rect.left;
+                const touchY = touch.clientY - rect.top;
                 
-                // Déplacer l'avion directement au point de toucher
-                mmx = touchX;
-                mmy = touchY;
-            } else if (e.touches.length === 2) {
-                lastTouchDistance = dist(
-                    e.touches[0].clientX, e.touches[0].clientY,
-                    e.touches[1].clientX, e.touches[1].clientY
-                );
+                aircraftMoving = true;
+                e.preventDefault();
+                
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    lastTouchX = touchX;
+                    lastTouchY = touchY;
+                    
+                    mmx = touchX;
+                    mmy = touchY;
+                } else if (e.touches.length === 2) {
+                    lastTouchDistance = dist(
+                        e.touches[0].clientX, e.touches[0].clientY,
+                        e.touches[1].clientX, e.touches[1].clientY
+                    );
+                }
             }
         }
 
         function handleTouchMove(e) {
             if (!canvas || !canvas.elt) return;
             
-            if (!aircraftMoving) {
-                return;
-            }
-            
-            const touch = e.touches[0];
-            const rect = canvas.elt.getBoundingClientRect();
-            const touchX = touch.clientX - rect.left;
-            const touchY = touch.clientY - rect.top;
+            if (isMobile) {
+                // Sur mobile, on ne permet que le zoom
+                if (e.touches.length === 2) {
+                    let currentDistance = dist(
+                        e.touches[0].clientX, e.touches[0].clientY,
+                        e.touches[1].clientX, e.touches[1].clientY
+                    );
+                    
+                    let zoomFactor = currentDistance / lastTouchDistance;
+                    zoomScale *= zoomFactor;
+                    zoomScale = constrain(zoomScale, 0.5, 3.0);
+                    
+                    lastTouchDistance = currentDistance;
+                    e.preventDefault();
+                }
+                // On ignore les mouvements à un doigt pour éviter le déplacement de l'avion
+            } else {
+                // Sur ordinateur, on garde le comportement original
+                if (!aircraftMoving) {
+                    return;
+                }
+                
+                const touch = e.touches[0];
+                const rect = canvas.elt.getBoundingClientRect();
+                const touchX = touch.clientX - rect.left;
+                const touchY = touch.clientY - rect.top;
 
-            if (e.touches.length === 1 && isDragging) {
-                // Déplacer l'avion librement
-                mmx = touchX;
-                mmy = touchY;
-                e.preventDefault();
-            } else if (e.touches.length === 2) {
-                let currentDistance = dist(
-                    e.touches[0].clientX, e.touches[0].clientY,
-                    e.touches[1].clientX, e.touches[1].clientY
-                );
-                
-                let zoomFactor = currentDistance / lastTouchDistance;
-                zoomScale *= zoomFactor;
-                zoomScale = constrain(zoomScale, 0.5, 3.0);
-                
-                lastTouchDistance = currentDistance;
-                e.preventDefault();
+                if (e.touches.length === 1 && isDragging) {
+                    mmx = touchX;
+                    mmy = touchY;
+                    e.preventDefault();
+                } else if (e.touches.length === 2) {
+                    let currentDistance = dist(
+                        e.touches[0].clientX, e.touches[0].clientY,
+                        e.touches[1].clientX, e.touches[1].clientY
+                    );
+                    
+                    let zoomFactor = currentDistance / lastTouchDistance;
+                    zoomScale *= zoomFactor;
+                    zoomScale = constrain(zoomScale, 0.5, 3.0);
+                    
+                    lastTouchDistance = currentDistance;
+                    e.preventDefault();
+                }
             }
         }
 
         function handleTouchEnd(e) {
-            aircraftMoving = false;
-            isDragging = false;
+            if (!isMobile) {
+                aircraftMoving = false;
+                isDragging = false;
+            }
             capPlusPressed = false;
             capMoinsPressed = false;
         }
@@ -1011,4 +1043,5 @@
             e.preventDefault();
         });
     </script>
-</body
+</body>
+</html>
