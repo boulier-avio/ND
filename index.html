@@ -462,7 +462,7 @@
             mmy = height / 2;
         }
 
-        ffunction handleTouchStart(e) {
+        function handleTouchStart(e) {
     const touch = e.touches[0];
     const rect = canvas.elt.getBoundingClientRect();
     const touchX = touch.clientX - rect.left;
