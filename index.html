@@ -474,32 +474,17 @@
         let isPortrait = true;
 
         function preload() {
-            imgNDcadre = loadImage('NDcadre.png', imageLoaded, imageLoadError);
-            imgNDmaquette = loadImage('NDmaquette.png', imageLoaded, imageLoadError);
-            imgNDrose = loadImage('NDrose.png', imageLoaded, imageLoadError);
-            flecheNDDouble = loadImage('NDDouble.png', imageLoaded, imageLoadError);
-            flecheNDSimple = loadImage('NDSimple.png', imageLoaded, imageLoadError);
-            imgNDB = loadImage('NDB.png', imageLoaded, imageLoadError);
-            imgPlane = loadImage('plane.png', imageLoaded, imageLoadError);
-            imgtraicap = loadImage('traicap.png', imageLoaded, imageLoadError);
+            imgNDcadre = loadImage('NDcadre.png');
+            imgNDmaquette = loadImage('NDmaquette.png');
+            imgNDrose = loadImage('NDrose.png');
+            flecheNDDouble = loadImage('NDDouble.png');
+            flecheNDSimple = loadImage('NDSimple.png');
+            imgNDB = loadImage('NDB.png');
+            imgPlane = loadImage('plane.png');
+            imgtraicap = loadImage('traicap.png');
         }
 
-        function imageLoaded() {
-            imagesLoadedCount++;
-            if (imagesLoadedCount === imagesToLoad) {
-                imagesLoaded = true;
-                document.querySelector('.loading').style.display = 'none';
-            }
-        }
-
-        function imageLoadError() {
-            imagesLoadedCount++;
-            if (imagesLoadedCount === imagesToLoad) {
-                imagesLoaded = false;
-                document.querySelector('.loading').textContent = 'Images non chargées - Mode graphique de secours';
-            }
-        }
-
+        
         function setup() {
             isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
                       ('ontouchstart' in window) || 
@@ -816,8 +801,7 @@
         }
 
         function drawMainElements(NDX, NDY, cadreSize, roseSize, traicapSize, NDBX1, NDBY1, NDBX2, NDBY2) {
-            if (imagesLoaded) {
-                try {
+            
                     image(imgNDcadre, NDX, NDY, cadreSize, cadreSize);
                     image(imgNDmaquette, NDX, NDY, cadreSize/10, cadreSize/10);
 
@@ -844,49 +828,10 @@
                     image(imgNDB, NDBX1, NDBY1);
                     image(imgNDB, NDBX2, NDBY2);
                     
-                } catch (e) {
-                    drawFallbackGraphics(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2);
-                }
-            } else {
-                drawFallbackGraphics(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2);
-            }
+                
         }
 
-        function drawFallbackGraphics(NDX, NDY, cadreSize, roseSize, NDBX1, NDBY1, NDBX2, NDBY2) {
-            stroke(0);
-            strokeWeight(2);
-            noFill();
-            rect(NDX, NDY, cadreSize, cadreSize);
-            
-            stroke(100);
-            strokeWeight(1);
-            noFill();
-            circle(NDX, NDY, roseSize);
-            
-            fill(100);
-            noStroke();
-            rect(NDX-15, NDY, 30, 10);
-            
-            fill(255, 0, 0);
-            circle(NDBX1, NDBY1, 20);
-            circle(NDBX2, NDBY2, 20);
-            
-            stroke(255, 0, 0);
-            strokeWeight(3);
-            push();
-            translate(NDX, NDY);
-            rotate(radians(QDM));
-            line(0, 0, 0, -100);
-            pop();
-            
-            stroke(0, 0, 255);
-            push();
-            translate(NDX, NDY);
-            rotate(radians(QDM1));
-            line(0, 0, 0, -120);
-            pop();
-        }
-
+        
         function calculateNavigation(NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2) {
             let adjustedMmx = (mmx - offsetX) / zoomScale;
             let adjustedMmy = (mmy - offsetY) / zoomScale;
@@ -921,24 +866,13 @@
             push();
             translate(adjustedMmx, adjustedMmy);
             rotate(radians(rose));
-            if (imagesLoaded) {
-                try {
+            
                     image(imgPlane, 1, 5);
-                } catch (e) {
-                    drawFallbackAircraft();
-                }
-            } else {
-                drawFallbackAircraft();
-            }
+                
             pop();
         }
 
-        function drawFallbackAircraft() {
-            fill(255, 0, 0);
-            triangle(-15, -10, 15, -10, 0, -25);
-            rect(-5, 0, 10, 15);
-        }
-
+        
         function updateAnswers() {
             const reponsesBox = document.getElementById('reponsesBox');
             if (reponsesBox) {
