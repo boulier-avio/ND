@@ -491,10 +491,12 @@
             let adjustedTouchX = (touchX - offsetX) / zoomScale;
             let adjustedTouchY = (touchY - offsetY) / zoomScale;
             
-            if (isInBaliseZone(adjustedTouchX, adjustedTouchY)) {
-                aircraftMoving = true;
-                mmx = touchX;
-                mmy = touchY;
+           if (isInBaliseZone(adjustedTouchX, adjustedTouchY)) {
+    aircraftMoving = true;
+    e.preventDefault();  // empêcher le scroll SEULEMENT ici
+} else {
+    aircraftMoving = false;  // scroll autorisé
+}
                
                 
                 if (e.touches.length === 1) {
@@ -519,7 +521,7 @@
                 const rect = canvas.elt.getBoundingClientRect();
                 const touchX = touch.clientX - rect.left;
                 const touchY = touch.clientY - rect.top;
-                
+              if (!aircraftMoving) return;  
                 
                 if (e.touches.length === 1 && isDragging) {
                     let adjustedTargetX = (touchX - offsetX) / zoomScale;
