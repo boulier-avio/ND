@@ -22,7 +22,7 @@
             touch-action: pan-y;
             overflow-y: auto;
             overflow-x: visible;
-            -webkit-overflow-scrolling: touch; /* Important pour iOS */
+            -webkit-overflow-scrolling: touch;
         }
         h1 {
             color: #333;
@@ -150,12 +150,17 @@
             height: 500px;
             border: 1px solid #ccc;
             background: white;
-            /* Permettre le défilement à travers le canvas */
+            /* CORRECTION : Permettre le défilement à travers */
             touch-action: pan-y;
-              touch-action: pan-y pinch-zoom; /* Permettre le défilement et le zoom */
-    overflow: visible; /* Permettre le défilement à travers */
-    -webkit-overflow-scrolling: touch; /* Défilement fluide iOS */
-            
+            overflow: visible;
+            -webkit-overflow-scrolling: touch;
+            /* Important pour permettre le défilement */
+            pointer-events: none; /* Désactiver les événements sur le container */
+        }
+        /* CORRECTION : Réactiver les événements uniquement sur le canvas */
+        #canvasContainer canvas {
+            pointer-events: auto;
+            touch-action: pan-y; /* Permettre le défilement vertical */
         }
         #reponsesBox {
             flex: 1 1 0%;
@@ -194,8 +199,8 @@
             #canvasContainer {
                 height: 400px;
                 max-width: 95vw;
+                /* CORRECTION : Assurer le défilement sur mobile */
                 touch-action: pan-y;
-                 /* Important pour mobile */
             }
             .controls {
                 flex-direction: column;
@@ -444,6 +449,11 @@
             canvas.style('display', 'block');
             canvas.style('cursor', 'default');
             
+            // CORRECTION : Configuration du canvas pour permettre le défilement
+            canvas.elt.style.touchAction = 'pan-y';
+            canvas.elt.style.webkitUserSelect = 'none';
+            canvas.elt.style.userSelect = 'none';
+            
             // Gestion des événements tactiles
             canvas.elt.addEventListener('touchstart', handleTouchStart, { passive: false });
             canvas.elt.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -463,62 +473,62 @@
         }
 
         function handleTouchStart(e) {
-    const touch = e.touches[0];
-    const rect = canvas.elt.getBoundingClientRect();
-    const touchX = touch.clientX - rect.left;
-    const touchY = touch.clientY - rect.top;
-    
-    // Vérifier si on touche près de l'avion pour le déplacement
-    const aircraftDistance = dist(touchX, touchY, mmx, mmy);
-    if (aircraftDistance < 50) { // Si on touche près de l'avion
-        aircraftMoving = true;
-        e.preventDefault();
-        
-        if (e.touches.length === 1) {
-            isDragging = true;
-            lastTouchX = touchX;
-            lastTouchY = touchY;
+            const touch = e.touches[0];
+            const rect = canvas.elt.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            const touchY = touch.clientY - rect.top;
             
-            // Déplacer l'avion directement au point de toucher
-            mmx = touchX;
-            mmy = touchY;
-        } else if (e.touches.length === 2) {
-            lastTouchDistance = dist(
-                e.touches[0].clientX, e.touches[0].clientY,
-                e.touches[1].clientX, e.touches[1].clientY
-            );
-        }
-    }
-    // Sinon, permettre le défilement normal
-}
-
-        function handleTouchMove(e) {
-            if (aircraftMoving) {
-                const touch = e.touches[0];
-                const rect = canvas.elt.getBoundingClientRect();
-                const touchX = touch.clientX - rect.left;
-                const touchY = touch.clientY - rect.top;
-                if (!aircraftMoving) {
-        return;
-    }
-                if (e.touches.length === 1 && isDragging) {
-                    // Déplacer l'avion librement
+            // Vérifier si on touche près de l'avion pour le déplacement
+            const aircraftDistance = dist(touchX, touchY, mmx, mmy);
+            if (aircraftDistance < 80) { // Zone plus large pour faciliter le toucher
+                aircraftMoving = true;
+                e.preventDefault();
+                
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    lastTouchX = touchX;
+                    lastTouchY = touchY;
+                    
+                    // Déplacer l'avion directement au point de toucher
                     mmx = touchX;
                     mmy = touchY;
-                    e.preventDefault();
                 } else if (e.touches.length === 2) {
-                    let currentDistance = dist(
+                    lastTouchDistance = dist(
                         e.touches[0].clientX, e.touches[0].clientY,
                         e.touches[1].clientX, e.touches[1].clientY
                     );
-                    
-                    let zoomFactor = currentDistance / lastTouchDistance;
-                    zoomScale *= zoomFactor;
-                    zoomScale = constrain(zoomScale, 0.5, 3.0);
-                    
-                    lastTouchDistance = currentDistance;
-                    e.preventDefault();
                 }
+            }
+            // Sinon, permettre le défilement normal (ne pas appeler preventDefault())
+        }
+
+        function handleTouchMove(e) {
+            if (!aircraftMoving) {
+                return; // Permettre le défilement normal
+            }
+            
+            const touch = e.touches[0];
+            const rect = canvas.elt.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            const touchY = touch.clientY - rect.top;
+
+            if (e.touches.length === 1 && isDragging) {
+                // Déplacer l'avion librement
+                mmx = touchX;
+                mmy = touchY;
+                e.preventDefault();
+            } else if (e.touches.length === 2) {
+                let currentDistance = dist(
+                    e.touches[0].clientX, e.touches[0].clientY,
+                    e.touches[1].clientX, e.touches[1].clientY
+                );
+                
+                let zoomFactor = currentDistance / lastTouchDistance;
+                zoomScale *= zoomFactor;
+                zoomScale = constrain(zoomScale, 0.5, 3.0);
+                
+                lastTouchDistance = currentDistance;
+                e.preventDefault();
             }
         }
 
@@ -548,6 +558,9 @@
                     e.preventDefault();
                     capPlusPressed = false;
                 }, {passive: false});
+                capPlusBtn.addEventListener('touchcancel', function(e) {
+                    capPlusPressed = false;
+                });
             }
             
             if (capMoinsBtn) {
@@ -562,6 +575,9 @@
                     e.preventDefault();
                     capMoinsPressed = false;
                 }, {passive: false});
+                capMoinsBtn.addEventListener('touchcancel', function(e) {
+                    capMoinsPressed = false;
+                });
             }
             
             if (randomBothBtn) {
