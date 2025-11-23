@@ -20,6 +20,7 @@
             align-items: center;
             min-height: 100vh;
             touch-action: pan-y;
+            touch-action: pan-x;
             overflow-y: auto;
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch; /* Important pour iOS */
@@ -152,6 +153,7 @@
             background: white;
             /* Permettre le défilement à travers le canvas */
             touch-action: pan-y;
+            touch-action: pan-x;
         }
         #reponsesBox {
             flex: 1 1 0%;
@@ -190,7 +192,8 @@
             #canvasContainer {
                 height: 300px;
                 max-width: 95vw;
-                touch-action: pan-y; /* Important pour mobile */
+                touch-action: pan-y;
+                touch-action: pan-x; /* Important pour mobile */
             }
             .controls {
                 flex-direction: column;
