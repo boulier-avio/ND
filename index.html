@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>ADF sur ND2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ADF sur ND0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js"></script>
     <style>
         * {
@@ -19,11 +19,9 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            touch-action: pan-y;
             overflow-y: auto;
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
-            touch-action: pan-y;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
             -webkit-text-size-adjust: none;
@@ -179,13 +177,10 @@
             min-height: 300px;
             border: 1px solid #ccc;
             background: white;
-            touch-action: pan-y;
             overflow: hidden;
-            -webkit-overflow-scrolling: touch;
         }
         #canvasContainer canvas {
             pointer-events: auto;
-            touch-action: pan-y;
             width: 100% !important;
             height: 100% !important;
         }
@@ -393,7 +388,7 @@
         
         <div class="jeu-reponse-row">
             <div id="canvasContainer">
-                <div class="loading">Chargement des images...</div>
+            
             </div>
             <div id="reponsesBox">QDR1 = ?<br>QDM1 = ?<br>GT1 = ?<br>CAP = ?<br>QDR2 = ?<br>QDM2 = ?<br>GT2 = ?</div>
         </div>
@@ -709,6 +704,13 @@
                         this.classList.remove('active');
                     }
                 });
+            });
+            
+            // Ajout de l'écouteur d'événement pour la touche "3"
+            document.addEventListener('keydown', function(e) {
+                if (e.key === '3') {
+                    randomBoth();
+                }
             });
         }
 
