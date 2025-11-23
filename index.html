@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>ADF sur ND</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js"></script>
     <style>
@@ -23,6 +23,36 @@
             overflow-y: auto;
             overflow-x: visible;
             -webkit-overflow-scrolling: touch;
+            /* Empêcher le zoom et le mode paysage */
+            touch-action: pan-y;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-text-size-adjust: none;
+        }
+        /* Message pour le mode paysage */
+        #landscapeWarning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            z-index: 10000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+        #landscapeWarning h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+        #landscapeWarning p {
+            font-size: 1.1em;
+            line-height: 1.4;
         }
         h1 {
             color: #333;
@@ -211,6 +241,40 @@
                 width: 100%;
             }
         }
+        /* Adaptation pour mobile en mode portrait */
+        @media (max-width: 768px) and (orientation: portrait) {
+            .container {
+                gap: 10px;
+            }
+            .consigne {
+                padding: 10px;
+                margin: 5px 10px;
+            }
+            #canvasContainer {
+                height: 60vh; /* Utiliser 60% de la hauteur de l'écran */
+                max-width: 95vw;
+                min-height: 350px;
+            }
+            .jeu-reponse-row {
+                gap: 5px;
+            }
+            .controls {
+                gap: 8px;
+            }
+            button {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+        }
+        /* Cacher l'application en mode paysage */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .container {
+                display: none;
+            }
+            #landscapeWarning {
+                display: flex;
+            }
+        }
         .modal {
             display: none;
             position: fixed;
@@ -295,6 +359,12 @@
     </style>
 </head>
 <body>
+    <!-- Message d'avertissement pour le mode paysage -->
+    <div id="landscapeWarning">
+        <h2>⤸ Veuillez tourner votre appareil</h2>
+        <p>Cette application est optimisée pour le mode portrait.<br>Veuillez retourner votre téléphone en mode vertical.</p>
+    </div>
+
     <div class="container">
         <h1>Navigation ADF sur ND</h1>
         
@@ -401,6 +471,9 @@
         // CORRECTION : Déclarer canvas en variable globale
         let canvas;
 
+        // Variables pour la gestion de l'orientation
+        let isPortrait = true;
+
         function preload() {
             // Chargement des images sans messages console
             imgNDcadre = loadImage('NDcadre.png', imageLoaded, imageLoadError);
@@ -434,10 +507,18 @@
                       ('ontouchstart' in window) || 
                       (navigator.maxTouchPoints > 0);
             
+            // Vérifier l'orientation initiale
+            checkOrientation();
+            
+            // Surveiller les changements d'orientation
+            window.addEventListener('orientationchange', checkOrientation);
+            window.addEventListener('resize', checkOrientation);
+            
             let canvasWidth, canvasHeight;
             if (isMobile) {
-                canvasWidth = windowWidth * 0.90;
-                canvasHeight = 400;
+                // Utiliser presque toute la largeur mais adapter la hauteur
+                canvasWidth = windowWidth * 0.95;
+                canvasHeight = windowHeight * 0.5; // 50% de la hauteur de l'écran
             } else {
                 canvasWidth = 1100;
                 canvasHeight = 500;
@@ -470,6 +551,27 @@
             // Position initiale de l'avion au centre
             mmx = width / 2;
             mmy = height / 2;
+            
+            // Ajuster le zoom initial pour mobile
+            if (isMobile) {
+                zoomScale = 0.8; // Zoom réduit pour voir plus de contenu
+            }
+        }
+
+        function checkOrientation() {
+            isPortrait = window.innerHeight > window.innerWidth;
+            const landscapeWarning = document.getElementById('landscapeWarning');
+            const container = document.querySelector('.container');
+            
+            if (isMobile && !isPortrait) {
+                // Mode paysage - afficher l'avertissement
+                if (landscapeWarning) landscapeWarning.style.display = 'flex';
+                if (container) container.style.display = 'none';
+            } else {
+                // Mode portrait - afficher l'application
+                if (landscapeWarning) landscapeWarning.style.display = 'none';
+                if (container) container.style.display = 'flex';
+            }
         }
 
         function handleTouchStart(e) {
@@ -642,12 +744,13 @@
             let NDX, NDY, NDBX1, NDBY1, NDBX2, NDBY2;
             
             if (isMobile) {
-                NDX = width * 0.3;
-                NDY = height * 0.3;
-                NDBX1 = width * 0.7;
-                NDBY1 = height * 0.25;
-                NDBX2 = width * 0.7;
-                NDBY2 = height * 0.5;
+                // Adaptation pour mobile - positions relatives
+                NDX = width * 0.35;
+                NDY = height * 0.4;
+                NDBX1 = width * 0.75;
+                NDBY1 = height * 0.3;
+                NDBX2 = width * 0.75;
+                NDBY2 = height * 0.6;
             } else {
                 NDX = 200;
                 NDY = 183;
@@ -664,9 +767,10 @@
 
             let cadreSize, roseSize, traicapSize;
             if (isMobile) {
-                cadreSize = min(width, height) * 0.4;
-                roseSize = min(width, height) * 0.35;
-                traicapSize = min(width, height) * 0.4;
+                // Taille réduite pour mobile pour mieux voir l'ensemble
+                cadreSize = min(width, height) * 0.35;
+                roseSize = min(width, height) * 0.3;
+                traicapSize = min(width, height) * 0.35;
             } else {
                 cadreSize = 368;
                 roseSize = 368;
@@ -685,7 +789,7 @@
         function drawBaliseNumbers(NDBX1, NDBY1, NDBX2, NDBY2) {
             // Numéros en ROUGE sur les balises
             fill(255, 0, 0);
-            textSize(isMobile ? 16 : 20);
+            textSize(isMobile ? 14 : 20);
             textAlign(CENTER, CENTER);
             textStyle(BOLD);
             text("1", NDBX1, NDBY1);
@@ -913,9 +1017,11 @@
         }
 
         function windowResized() {
-            if (isMobile) {
-                resizeCanvas(windowWidth * 0.95, 400);
-            } else {
+            checkOrientation();
+            
+            if (isMobile && isPortrait) {
+                resizeCanvas(windowWidth * 0.95, windowHeight * 0.5);
+            } else if (!isMobile) {
                 resizeCanvas(1000, 500);
             }
         }
@@ -949,6 +1055,19 @@
                 e.preventDefault();
                 return false;
             }
+        });
+
+        // Empêcher le zoom avec pincement
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('gesturechange', function(e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('gestureend', function(e) {
+            e.preventDefault();
         });
     </script>
 </body>
