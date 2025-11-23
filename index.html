@@ -152,6 +152,9 @@
             background: white;
             /* Permettre le défilement à travers le canvas */
             touch-action: pan-y;
+              touch-action: pan-y pinch-zoom; /* Permettre le défilement et le zoom */
+    overflow: visible; /* Permettre le défilement à travers */
+    -webkit-overflow-scrolling: touch; /* Défilement fluide iOS */
             
         }
         #reponsesBox {
@@ -459,31 +462,35 @@
             mmy = height / 2;
         }
 
-        function handleTouchStart(e) {
-            const touch = e.touches[0];
-            const rect = canvas.elt.getBoundingClientRect();
-            const touchX = touch.clientX - rect.left;
-            const touchY = touch.clientY - rect.top;
+        ffunction handleTouchStart(e) {
+    const touch = e.touches[0];
+    const rect = canvas.elt.getBoundingClientRect();
+    const touchX = touch.clientX - rect.left;
+    const touchY = touch.clientY - rect.top;
+    
+    // Vérifier si on touche près de l'avion pour le déplacement
+    const aircraftDistance = dist(touchX, touchY, mmx, mmy);
+    if (aircraftDistance < 50) { // Si on touche près de l'avion
+        aircraftMoving = true;
+        e.preventDefault();
+        
+        if (e.touches.length === 1) {
+            isDragging = true;
+            lastTouchX = touchX;
+            lastTouchY = touchY;
             
-            // Toujours permettre le déplacement de l'avion
-            aircraftMoving = true;
-            e.preventDefault();
-            
-            if (e.touches.length === 1) {
-                isDragging = true;
-                lastTouchX = touchX;
-                lastTouchY = touchY;
-                
-                // Déplacer l'avion directement au point de toucher
-                mmx = touchX;
-                mmy = touchY;
-            } else if (e.touches.length === 2) {
-                lastTouchDistance = dist(
-                    e.touches[0].clientX, e.touches[0].clientY,
-                    e.touches[1].clientX, e.touches[1].clientY
-                );
-            }
+            // Déplacer l'avion directement au point de toucher
+            mmx = touchX;
+            mmy = touchY;
+        } else if (e.touches.length === 2) {
+            lastTouchDistance = dist(
+                e.touches[0].clientX, e.touches[0].clientY,
+                e.touches[1].clientX, e.touches[1].clientY
+            );
         }
+    }
+    // Sinon, permettre le défilement normal
+}
 
         function handleTouchMove(e) {
             if (aircraftMoving) {
@@ -491,7 +498,9 @@
                 const rect = canvas.elt.getBoundingClientRect();
                 const touchX = touch.clientX - rect.left;
                 const touchY = touch.clientY - rect.top;
-                
+                if (!aircraftMoving) {
+        return;
+    }
                 if (e.touches.length === 1 && isDragging) {
                     // Déplacer l'avion librement
                     mmx = touchX;
