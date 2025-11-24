@@ -20,6 +20,7 @@
             align-items: center;
             min-height: 100vh;
             overflow: auto;
+             -webkit-overflow-scrolling: touch;
             
         }
         /* Message pour le mode paysage */
@@ -173,7 +174,7 @@
             min-height: 300px;
             border: 1px solid #ccc;
             background: white;
-            overflow: auto;
+            overflow: hidden;
         }
         #canvasContainer canvas {
             pointer-events: auto;
@@ -498,7 +499,7 @@
             canvas.style('display', 'block');
             canvas.style('cursor', 'default');
             
-            canvas.elt.style.touchAction = 'pan-y';
+            canvas.elt.style.touchAction = 'none';
             canvas.elt.style.webkitUserSelect = 'none';
             canvas.elt.style.userSelect = 'none';
             
@@ -549,7 +550,7 @@
                         e.touches[0].clientX, e.touches[0].clientY,
                         e.touches[1].clientX, e.touches[1].clientY
                     );
-                    e.preventDefault();
+                   
                 }
                 // On ignore les touches simples pour éviter le déplacement de l'avion
             } else {
@@ -580,24 +581,24 @@
 
         function handleTouchMove(e) {
             if (!canvas || !canvas.elt) return;
+    
+    if (isMobile) {
+        // Sur mobile, on ne permet que le zoom
+        if (e.touches.length === 2) {
+            let currentDistance = dist(
+                e.touches[0].clientX, e.touches[0].clientY,
+                e.touches[1].clientX, e.touches[1].clientY
+            );
             
-            if (isMobile) {
-                // Sur mobile, on ne permet que le zoom
-                if (e.touches.length === 2) {
-                    let currentDistance = dist(
-                        e.touches[0].clientX, e.touches[0].clientY,
-                        e.touches[1].clientX, e.touches[1].clientY
-                    );
-                    
-                    let zoomFactor = currentDistance / lastTouchDistance;
-                    zoomScale *= zoomFactor;
-                    zoomScale = constrain(zoomScale, 0.5, 3.0);
-                    
-                    lastTouchDistance = currentDistance;
-                    e.preventDefault();
-                }
-                // On ignore les mouvements à un doigt pour éviter le déplacement de l'avion
-            } else {
+            let zoomFactor = currentDistance / lastTouchDistance;
+            zoomScale *= zoomFactor;
+            zoomScale = constrain(zoomScale, 0.5, 3.0);
+            
+            lastTouchDistance = currentDistance;
+            e.preventDefault(); // ✓ Seulement pour le zoom
+        }
+        // PAS de preventDefault pour les touches simples
+    } else {
                 // Sur ordinateur, on garde le comportement original
                 if (!aircraftMoving) {
                     return;
