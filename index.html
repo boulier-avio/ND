@@ -752,13 +752,13 @@
 
             let cadreSize, roseSize, traicapSize;
             if (isMobile) {
-                cadreSize = min(width, height) * 0.4;
-                roseSize = min(width, height) * 0.4;
-                traicapSize = min(width, height) * 0.4;
+                cadreSize = min(width, height) * 0.5;
+                roseSize = min(width, height) * 0.5;
+                traicapSize = min(width, height) * 0.5;
             } else {
-                cadreSize = min(width, height) ;
-                roseSize = min(width, height) ;
-                traicapSize = min(width, height);
+                cadreSize = min(width, height)*0.8 ;
+                roseSize = min(width, height) *0.8;
+                traicapSize = min(width, height)*0.8;
             }
 
             drawMainElements(NDX, NDY, cadreSize, roseSize, traicapSize, NDBX1, NDBY1, NDBX2, NDBY2);
