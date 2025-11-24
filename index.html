@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>ADF sur ND0</title>
+    <title>ADF sur ND1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js"></script>
     <style>
         * {
@@ -19,8 +19,8 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            overflow-y: auto;
-            overflow-x: hidden;
+            overflow: auto;
+            
             -webkit-overflow-scrolling: touch;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
@@ -177,7 +177,7 @@
             min-height: 300px;
             border: 1px solid #ccc;
             background: white;
-            overflow: hidden;
+            overflow: auto;
         }
         #canvasContainer canvas {
             pointer-events: auto;
